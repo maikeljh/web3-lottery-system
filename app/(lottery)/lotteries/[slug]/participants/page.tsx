@@ -1,27 +1,35 @@
 "use client";
-
 import { Button, Flex, Spacer } from "@chakra-ui/react";
 import Image from "next/image";
+import User from "../../../../../public/assets/user.png";
 import { useState } from "react";
-import User from "../../../public/assets/user.png";
-import Ok from "../../../public/assets/ok.png";
 
 const Page = () => {
   const [data, setData] = useState([
     {
-      notification: "Lottery “Anjay” just ended. Check out the result!",
+      username: "username",
+      name: "Sebastian",
+      joined: "2 min ago",
     },
     {
-      notification: "Lottery “Anjay” just ended. Check out the result!",
+      username: "username",
+      name: "Sebastian",
+      joined: "2 min ago",
     },
     {
-      notification: "Lottery “Anjay” just ended. Check out the result!",
+      username: "username",
+      name: "Sebastian",
+      joined: "2 min ago",
     },
     {
-      notification: "Lottery “Anjay” just ended. Check out the result!",
+      username: "username",
+      name: "Sebastian",
+      joined: "2 min ago",
     },
     {
-      notification: "Lottery “Anjay” just ended. Check out the result!",
+      username: "username",
+      name: "Sebastian",
+      joined: "2 min ago",
     },
   ]);
 
@@ -31,18 +39,19 @@ const Page = () => {
 
   return (
     <>
-      <Flex direction={"column"} gap={"1rem"}>
-        <h1 className="text-3xl font-bold">Notifications</h1>
-        <Flex direction={"column"} gap={"1rem"}>
+      <Flex direction={"column"} bg={"white"} padding={"2rem"}>
+        <h1 className="text-3xl font-bold border-b-2 border-black pb-6">
+          Participants
+        </h1>
+        <Flex direction={"column"}>
           {data &&
-            data.map((notif, index) => (
+            data.map((user, index) => (
               <>
                 <Flex
-                  bg="white"
                   padding={"1rem"}
-                  className="shadow-lg"
                   gap={"1rem"}
                   align={"center"}
+                  className="border-b-2 border-black"
                 >
                   <Flex
                     align="center"
@@ -50,16 +59,17 @@ const Page = () => {
                   >
                     <Image src={User} alt="user" className="w-[1.75rem]" />
                   </Flex>
-                  <p>{notif.notification}</p>
-                  <Spacer />
-                  <Flex align="center">
-                    <Image src={Ok} alt="ok" className="w-[1.75rem]" />
+                  <Flex direction={"column"} fontWeight={"semibold"}>
+                    <p>{user.name}</p>
+                    <p>@{user.username}</p>
                   </Flex>
+                  <Spacer />
+                  <p className="font-semibold">{user.joined}</p>
                 </Flex>
               </>
             ))}
         </Flex>
-        <Flex align={"center"} padding={"1rem"} width={"full"}>
+        <Flex align={"center"} padding={"1rem"} width={"full"} mt={"1rem"}>
           <Button
             width={"6rem"}
             fontSize={"small"}
