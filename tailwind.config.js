@@ -41,7 +41,7 @@ module.exports = {
         "primary-4-500": "#ADA191",
         "primary-4-600": "#625C53",
         "primary-4-700": "#191715",
-        danger: "D33333",
+        danger: "#D33333",
       },
     },
   },
