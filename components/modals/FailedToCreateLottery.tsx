@@ -13,7 +13,7 @@ import {
 } from '@chakra-ui/react'
 import Failed from "../../public/assets/failed.png";
 import Image from "next/image";
-const FailedToJoinLottery = () => {
+const FailedToCreateLottery = () => {
 const { isOpen, onOpen, onClose } = useDisclosure()
 
 return (
@@ -31,7 +31,7 @@ return (
                 <ModalCloseButton />
                 <ModalBody pb={6} display="flex" flexDirection="column" alignItems="center" justifyContent="center">
                     <Heading as="h5" size="xl" textAlign="center">
-                        Lottery failed to join!
+                        Lottery failed to be created!
                     </Heading>
                 </ModalBody>
 
@@ -40,7 +40,7 @@ return (
                     TRY AGAIN
                 </Button>
                 <Button className='!text-primary-3-500 !bg-white !outline-primary-3-500'ml={15} onClick={onClose}>
-                    BACK TO HOME
+                    MY LOTTERIES
                 </Button>
                 </ModalFooter>
             </ModalContent>
@@ -49,4 +49,4 @@ return (
 )
 }
 
-export default FailedToJoinLottery;
+export default FailedToCreateLottery;
