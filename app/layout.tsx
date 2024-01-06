@@ -19,7 +19,9 @@ export default function RootLayout({
     <html lang="en">
       <body className="bg-[#FFF7EC]">
         <Navbar />
-        <ChakraProvider>{children}</ChakraProvider>
+        <main className="max-w-7xl mx-auto py-8 px-8 xl:px-0">
+          <ChakraProvider>{children}</ChakraProvider>
+        </main>
       </body>
     </html>
   );
