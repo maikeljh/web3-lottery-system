@@ -34,7 +34,7 @@ const Navbar = () => {
             href="/"
             className={`px-8 h-full flex items-center ${
               pathname === "/" ? "text-primary-2-400 underline" : ""
-            }`}
+            } hover:text-primary-2-400`}
           >
             Home
           </Link>
@@ -44,18 +44,39 @@ const Navbar = () => {
               pathname.startsWith("/lotteries")
                 ? "text-primary-2-400 underline"
                 : ""
-            }`}
+            } hover:text-primary-2-400`}
           >
             Lotteries
             <div className="hidden group-hover:block absolute top-[61px] bg-primary-1-500 left-0 rounded-b-lg rounded-tr-lg p-4 w-[14rem]">
               <Flex direction={"column"} gap={"5px"}>
-                <Link href="/lotteries" className="text-white">
+                <Link
+                  href="/lotteries"
+                  className={`text-white hover:text-primary-2-400 ${
+                    pathname === "/lotteries"
+                      ? "!text-primary-2-400 underline"
+                      : ""
+                  }`}
+                >
                   Public Lotteries
                 </Link>
-                <Link href="/lotteries/hosted" className="text-white">
+                <Link
+                  href="/lotteries/hosted"
+                  className={`text-white hover:text-primary-2-400 ${
+                    pathname.startsWith("/lotteries/hosted")
+                      ? "!text-primary-2-400 underline"
+                      : ""
+                  }`}
+                >
                   Hosted Lotteries
                 </Link>
-                <Link href="/lotteries/participated" className="text-white">
+                <Link
+                  href="/lotteries/participated"
+                  className={`text-white hover:text-primary-2-400 ${
+                    pathname.startsWith("/lotteries/participated")
+                      ? "!text-primary-2-400 underline"
+                      : ""
+                  }`}
+                >
                   Participated Lotteries
                 </Link>
               </Flex>
@@ -67,7 +88,7 @@ const Navbar = () => {
               pathname.startsWith("/groups")
                 ? "text-primary-2-400 underline"
                 : ""
-            }`}
+            } hover:text-primary-2-400`}
           >
             Groups
           </Link>
@@ -77,7 +98,7 @@ const Navbar = () => {
               pathname.startsWith("/leaderboard")
                 ? "text-primary-2-400 underline"
                 : ""
-            }`}
+            } hover:text-primary-2-400`}
           >
             Leaderboard
           </Link>
