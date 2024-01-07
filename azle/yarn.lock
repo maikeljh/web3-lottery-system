@@ -18,7 +18,7 @@
   version "0.19.2"
   resolved "https://codeload.github.com/demergent-labs/candid/tar.gz/5797fa906b1a7cc30c161dbb0eb919283ce2f80d"
 
-"@dfinity/principal@^0.19.0":
+"@dfinity/principal@^0.19.3":
   version "0.19.3"
   resolved "https://registry.yarnpkg.com/@dfinity/principal/-/principal-0.19.3.tgz#428cfca3d2d2de9e1433b3b33498fd595fb441d8"
   integrity sha512-+nixVvdGt7ECxRvLXDXsvU9q9sSPssBtDQ4bXa149SK6gcYcmZ6lfWIi3DJNqj3tGROxILVBsguel9tECappsA==
@@ -253,13 +253,13 @@ arg@^4.1.0:
   resolved "https://registry.yarnpkg.com/arg/-/arg-4.1.3.tgz#269fc7ad5b8e42cb63c896d5666017261c144089"
   integrity sha512-58S9QDqG0Xx27YwPSt9fJxivjYl432YCwfDMfZ+71RAqUrZef7LrKQZ3LHLOwCS4FLNBplP533Zx895SeOCHvA==
 
-azle@0.18.6:
-  version "0.18.6"
-  resolved "https://registry.yarnpkg.com/azle/-/azle-0.18.6.tgz#a735e0ba4ef43b6015827438c9c3c62022b21b6b"
-  integrity sha512-XEebokPOpNAQ0+B7x6fj6cPVSvmbEYm2p9/bSvFxuKQ4VcnzmsOdX7HCZyYYTKsD5eTc4XxuaHqqdagmdzbJPw==
+azle@0.19.0:
+  version "0.19.0"
+  resolved "https://registry.yarnpkg.com/azle/-/azle-0.19.0.tgz#5ac6631f1f73865aa58fa8d5fab32f7e1b6460dc"
+  integrity sha512-cBP3GncD8vdRsRyfx+C0l6wVsfrbeasLFjHTIx9M+5oQKpKxXzNyOub9s8sl5RfhXkOF4r9xO9D4gV6uYU7MVA==
   dependencies:
     "@dfinity/candid" "github:demergent-labs/candid#minimum_viable"
-    "@dfinity/principal" "^0.19.0"
+    "@dfinity/principal" "^0.19.3"
     "@swc/core" "^1.3.86"
     "@types/uuid" "^9.0.4"
     buffer "^6.0.3"
@@ -298,6 +298,11 @@ diff@^4.0.1:
   version "4.0.2"
   resolved "https://registry.yarnpkg.com/diff/-/diff-4.0.2.tgz#60f3aecb89d5fae520c11aa19efc2bb982aade7d"
   integrity sha512-58lmxKSA4BNyLz+HHMUzlOEpg09FV+ev6ZMe3vJihgdxzgcwZ8VoEEPmALCZG9LmqfVoNMMKpttIYTVG6uDY7A==
+
+esbuild-wasm@^0.19.10:
+  version "0.19.11"
+  resolved "https://registry.yarnpkg.com/esbuild-wasm/-/esbuild-wasm-0.19.11.tgz#4ed96cdd1a289bc08432a25fd38b7331d3eac98d"
+  integrity sha512-MIhnpc1TxERUHomteO/ZZHp+kUawGEc03D/8vMHGzffLvbFLeDe6mwxqEZwlqBNY7SLWbyp6bBQAcCen8+wpjQ==
 
 esbuild@^0.19.3:
   version "0.19.7"

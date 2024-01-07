@@ -45,7 +45,7 @@ const Page = () => {
 
   const [prize, setPrize] = useState([
     {
-      rank: 1,
+      amount: 1,
       prize: "",
     },
   ]);
@@ -188,14 +188,14 @@ const Page = () => {
               </Flex>
               <Flex gap={"1rem"} align={"center"}>
                 <Flex gap={"1rem"} direction={"column"}>
-                  <h1 className="text-2xl font-bold min-w-[12rem]">Ranking</h1>
+                  <h1 className="text-2xl font-bold min-w-[12rem]">Amount</h1>
                   {prize &&
                     prize.map((prize, idx) => (
                       <input
                         type="number"
                         className="w-full border-2 p-2"
                         key={idx}
-                        value={prize.rank}
+                        value={prize.amount}
                       />
                     ))}
                 </Flex>
@@ -227,7 +227,7 @@ const Page = () => {
                           setPrize([
                             ...prize,
                             {
-                              rank: 0,
+                              amount: 0,
                               prize: "",
                             },
                           ])
