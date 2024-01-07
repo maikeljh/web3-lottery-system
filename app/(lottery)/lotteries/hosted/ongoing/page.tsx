@@ -5,6 +5,7 @@ import Banner from "../../../../../public/assets/banner.png";
 import Search from "../../../../../public/assets/search.png";
 import Card from "@/components/common/Card";
 import Image from "next/image";
+import Link from "next/link";
 
 const Page = () => {
   const data = [
@@ -112,14 +113,16 @@ const Page = () => {
           </Flex>
           <Flex direction={"row"} gap={"2rem"} wrap={"wrap"}>
             {data &&
-              data.map((notif) => (
+              data.map((lottery) => (
                 <>
-                  <Card
-                    image={notif.image}
-                    title={notif.title}
-                    description={notif.description}
-                    basis={"23%"}
-                  />
+                  <Link href="/lotteries/1" className="grow basis-[23%]">
+                    <Card
+                      image={lottery.image}
+                      title={lottery.title}
+                      description={lottery.description}
+                      basis={"23%"}
+                    />
+                  </Link>
                 </>
               ))}
           </Flex>

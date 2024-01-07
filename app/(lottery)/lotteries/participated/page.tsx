@@ -67,13 +67,15 @@ const Page = () => {
           </Flex>
           <Flex direction={"row"} gap={"2rem"}>
             {data &&
-              data.map((notif) => (
+              data.map((lottery) => (
                 <>
-                  <Card
-                    image={notif.image}
-                    title={notif.title}
-                    description={notif.description}
-                  />
+                  <Link href="/lotteries/1" className="grow basis-[23%]">
+                    <Card
+                      image={lottery.image}
+                      title={lottery.title}
+                      description={lottery.description}
+                    />
+                  </Link>
                 </>
               ))}
           </Flex>
@@ -93,13 +95,15 @@ const Page = () => {
           </Flex>
           <Flex direction={"row"} gap={"2rem"}>
             {data &&
-              data.map((notif) => (
+              data.map((lottery) => (
                 <>
-                  <Card
-                    image={notif.image}
-                    title={notif.title}
-                    description={notif.description}
-                  />
+                  <Link href="/lotteries/1" className="grow basis-[23%]">
+                    <Card
+                      image={lottery.image}
+                      title={lottery.title}
+                      description={lottery.description}
+                    />
+                  </Link>
                 </>
               ))}
           </Flex>
