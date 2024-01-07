@@ -95,8 +95,12 @@ const LotteryDetailPayload = Record({
 })
 type LotteryDetailPayload = typeof LotteryDetailPayload.tsType
 
+
+/* Nah gw masih ragu Roles ini perlu id unik ga tapi setelah dipikir" perlu buat stableBtreeMap nya atau kalau ga ntar
+harus kaya UserRole harus bikin interface baru buat key stableBTreeMap nya groupId sm name nurut kalian gimana
+*/
 const Roles = Record({
-    id: Principal,
+    id: Principal, 
     groupId: Principal,
     name: text,
     rank: int
