@@ -413,6 +413,10 @@ export default Canister({
                 Fail : `Failed to get group detail: ${error}`
             })
         }
+    }),
+
+    listGroups: query([], Vec(GroupPayload), () => {
+        return groups.values()
     })
 
 })
