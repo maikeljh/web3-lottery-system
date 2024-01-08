@@ -516,6 +516,7 @@ export default Canister({
 
             let group = groupOpt.Some
 
+            // Delete existing roles first from the group so there is no duplicate
             roles.values().filter((role) => 
                 role.groupId.toText() !== group.id.toText()
             )
