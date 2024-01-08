@@ -41,6 +41,22 @@ const User = Record({
   
 type User = typeof User.tsType;
 
+const NotificationDAO = Record({
+    id: Principal,
+    ownerId: Principal,
+    description: text,
+    isRead: bool,
+})
+
+type NotificationDAO = typeof NotificationDAO.tsType;
+
+const NotificationPayload = Record({
+    ownerId: Principal,
+    description: text,
+    isRead: bool
+})
+
+type NotificationPayload = typeof NotificationPayload.tsType;
 const PrizeDAO = Record({
     id: Principal,
     name: text,
@@ -119,6 +135,7 @@ const Error = Variant({
 let users = StableBTreeMap<Principal, User>(0);
 let prizes = StableBTreeMap<Principal, PrizeDAO>(1);
 let lotteries = StableBTreeMap<Principal, LotteryDAO>(2);
+let notifications = StableBTreeMap<Principal, NotificationDAO>(3);
 
 export default Canister({
     createLottery: update([LotteryPayload], Result(LotteryDAO, Error), (payload) => {
@@ -379,7 +396,6 @@ export default Canister({
                     InvalidId: `User with that id doesn't exist`
                 })
             }
-
             const hostedCompletedLotteries = lotteries.values().filter((lottery) => {
                 return lottery.hostId === userId && lottery.isCompleted === true;
             });
@@ -488,6 +504,112 @@ export default Canister({
             })
         }
     }),
+
+    getNotificationListByUser: query([Principal], Result(Vec(NotificationPayload), Error), (userId) => {
+        // validating user
+        try{
+            if (!userId) {
+                return Err({ InvalidPayload: `User Id is not valid!` });
+            }
+            const userOpt = users.get(userId)
+
+            if ("None" in userOpt) {
+                return Err({
+                    InvalidId: `User with that id doesn't exist`
+                })
+            }
+
+            const userNotifications = notifications.values().filter((notification) => {
+                return notification["ownerId"] === userId;
+            });
+
+            const previewUserNotifications: NotificationPayload[] = []
+
+            userNotifications.forEach((notification) => {
+                const previewUserNotification: NotificationPayload = {
+                    ownerId: notification.ownerId,
+                    description: notification.description,
+                    isRead: notification.isRead
+                }
+                previewUserNotifications.push(previewUserNotification)
+            })
+
+            return Ok(previewUserNotifications)
+        } catch (error:any){
+            return Err({
+                Fail: `Failed to display user notifications: ${error}`
+            })
+        }
+
+    }),
+
+    readNotification: update([Principal], Result(NotificationDAO, Error), (notificationId) => {
+        try{
+            if (!notificationId){
+                return Err({ InvalidPayload: 'Notification Id is not valid'});
+            }
+            const notificationOpt = notifications.get(notificationId)
+
+            if ("None" in notificationOpt) {
+                return Err({
+                    InvalidId: `Notification with that id doesn't exist`
+                })
+            }
+            const notification = notificationOpt.Some;
+           
+            const readNotification: NotificationDAO = {
+                ...notification,
+                isRead: true
+            }
+            notifications.insert(notificationId, readNotification);
+            return Ok(readNotification);
+
+        } catch (error:any){
+            return Err({
+                Fail: `Failed to read user notification: ${error}`
+            })
+        }
+    }),
+
+    getLatestNotificationsByUser: query([Principal], Result(Vec(NotificationPayload), Error), (userId) => {
+        // validating user
+        try{
+            if (!userId) {
+                return Err({ InvalidPayload: `User Id is not valid!` });
+            }
+            const userOpt = users.get(userId)
+
+            if ("None" in userOpt) {
+                return Err({
+                    InvalidId: `User with that id doesn't exist`
+                })
+            }
+
+            const userNotifications = notifications.values().filter((notification) => {
+                return notification["ownerId"] === userId;
+            });
+
+            const previewUserNotifications: NotificationPayload[] = []
+
+            userNotifications.slice(-3, -1).forEach((notification) => {
+                const previewUserNotification: NotificationPayload = {
+                    ownerId: notification.ownerId,
+                    description: notification.description,
+                    isRead: notification.isRead
+                }
+                previewUserNotifications.push(previewUserNotification)
+            })
+
+            return Ok(previewUserNotifications)
+        } catch (error:any){
+            return Err({
+                Fail: `Failed to display user notifications: ${error}`
+            })
+        }
+
+    }),
+
+
 })
 
 function generateId(): Principal {
@@ -498,7 +620,7 @@ function generateId(): Principal {
     return Principal.fromUint8Array(Uint8Array.from(randomBytes));
 }
 
-function checkCompletedLotteries(): void {
+function checkCompletedLotteries(): void { // Noted
     for (const lottery of lotteries.values()) {
         if (lottery.endedAt <= BigInt(Math.floor(performance.now())) * 1000000n && !lottery.isCompleted) {
         
