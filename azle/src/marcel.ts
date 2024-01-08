@@ -151,6 +151,14 @@ const GroupPayload = Record({
 })
 type GroupPayload = typeof GroupPayload.tsType
 
+const EditGroupPayload = Record({
+    id: Principal,
+    name: text,
+    roles: Vec(RolesPayload),
+    avatar: blob
+})
+type EditGroupPayload = typeof EditGroupPayload.tsType
+
 const DetailGroupPayload = Record({
     id: Principal,
     name: text,
@@ -171,7 +179,7 @@ const Error = Variant({
 let users = StableBTreeMap<Principal, User>(0);
 let prizes = StableBTreeMap<Principal, PrizeDAO>(1);
 let lotteries = StableBTreeMap<Principal, LotteryDAO>(2);
-let roles = StableBTreeMap<Principal, RolesPayload>(3);
+let roles = StableBTreeMap<Principal, Roles>(3);
 let groups = StableBTreeMap<Principal, GroupDAO>(4);
 let userroles = StableBTreeMap<UserGroup, UserRole>(5);
 
@@ -417,6 +425,130 @@ export default Canister({
 
     listGroups: query([], Vec(GroupPayload), () => {
         return groups.values()
+    }),
+
+    editMemberRole: update([UserRole], Result(UserRole, Error), (payload) => {
+        try {
+            if (!payload.groupId || !payload.userId || !payload.userRole || !payload.username) {
+                return Err({
+                    InvalidPayload: `Payload is not valid!`
+                })
+            }
+
+            const dummyUG = {
+                userId: payload.userId,
+                groupId: payload.groupId
+            }
+
+            const userGroupOpt = userroles.get(dummyUG)
+
+            if ("None" in userGroupOpt) {
+                return Err({
+                    InvalidId: `Information of user's role doesn't exist`
+                })
+            }
+
+            let userGroup = userGroupOpt.Some
+
+            userGroup.userRole = payload.userRole
+
+            return Ok(userGroup);
+        } catch (error: any) {
+            return Err({
+                Fail: `Failed to edit user's role ${error}`
+            })
+        }
+    }),
+
+    removeMember: update([Principal, Principal], Result(GroupDAO, Error), (userId, groupId) => {
+        try {
+            if (!userId || !groupId) {
+                return Err({
+                    InvalidPayload: `Payload is not valid!`
+                })
+            }
+
+            const userOpt = users.get(userId)
+
+            const groupOpt = groups.get(groupId)
+
+            if ("None" in userOpt) {
+                return Err({
+                    InvalidId: `User with that id doesn't exist`
+                })
+            }
+
+            if ("None" in groupOpt) {
+                return Err({
+                    InvalidId: `Group with that id doesn't exist`
+                })
+            }
+
+            let group = groupOpt.Some
+
+            group.members.filter((memberId) => 
+                memberId.toText() !== userId.toText()
+            )
+
+            return Ok(group);
+        } catch (error: any) {
+            return Err({
+                Fail: `Fail to remove member: ${error}`
+            })
+        }
+    }),
+
+    editGroup: update([EditGroupPayload], Result(GroupDAO, Error), (payload) => {
+        try {
+            if (!payload.avatar || !payload.id || !payload.name || !payload.roles) {
+                return Err({
+                    InvalidPayload: `Payload is not valid!`
+                })
+            }
+
+            const groupOpt = groups.get(payload.id);
+
+            if ("None" in groupOpt) {
+                return Err({
+                    InvalidId: `Group with that id doesn't exist`
+                })
+            }
+
+            let group = groupOpt.Some
+
+            roles.values().filter((role) => 
+                role.groupId.toText() !== group.id.toText()
+            )
+
+            let groupRoles: Roles[] = []
+
+            payload.roles.forEach((groupRole) => {
+                let roleId = generateId()
+
+                while(!("None" in groups.get(roleId))) {
+                    roleId = generateId()
+                }
+                const role = {
+                    id: roleId,
+                    groupId: group.id,
+                    ...groupRole
+                }
+
+                roles.insert(role.id, role)
+
+                groupRoles = [...groupRoles, role]
+            })
+
+            group.name = payload.name
+            group.avatar = payload.avatar
+            group.roles = groupRoles
+
+            return Ok(group);
+        } catch (error: any) {
+            return Err({
+                Fail: `Fail to edit group: ${error}`
+            })
+        }
     })
 
 })
