@@ -34,7 +34,7 @@ const Card: React.FC<CardProps> = ({
     >
       <Flex direction={"column"} gap={"10px"} w={"full"} mb={"auto"}>
         <Flex align="center">
-          <Image src={image} alt="banner" className="w-full" />
+          <Image src={image} alt="banner" className="w-full h-auto" />
         </Flex>
         <p className="font-bold text-lg">{title}</p>
         {description}
