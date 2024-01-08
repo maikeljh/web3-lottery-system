@@ -1,10 +1,10 @@
-import { Nat64 } from '@dfinity/candid/lib/cjs/idl';
 import {
     blob,
     Canister,
     nat64,
     Principal,
     query,
+    update,
     Record,
     StableBTreeMap,
     text,
@@ -19,27 +19,50 @@ const User = Record({
     id: Principal,
     name: text,
     points: nat64,
-    avatar: blob,
 });
-  
 type User = typeof User.tsType;
+const UserPayload = Record({
+    name: text,
+    points: nat64,
+})
+  
+type UserPayload = typeof UserPayload.tsType;
 let users = StableBTreeMap<Principal, User>(0);
 export default Canister({
+    createUser: update([UserPayload], Result(User, text), (payload) => {
+        if (!payload.name || !payload.points){
+            return Err("Invalid input")
+        }
+        const id = generateId();
+        const user: User = {
+            id,
+            name : payload.name,
+            points: payload.points
+        };
+        users.insert(user.id, user);
+        return Ok(user);
+    }),
     getUsers: query([], Vec(User), () =>{
         return users.values();
       }),
-    getLeaderboard: query([], Vec(User), () =>{
-        return users.values();
-    }),
 
-    sort: query([Vec(User), text], Result(Vec(User), text), (leaderboard, status) => {
-        const sorted = leaderboard.sort(); // PR: ascending descending, points focused
-        if(sorted){
+    getLeaderboard: query([], Result(Vec(User), text), () => {
+        const leaderboard = users.values();
+        const sorted = leaderboard.sort((a: User, b: User) => Number(b["points"])-Number(a["points"])); // descending = b-a, ascending = a-b
+        if(sorted.length > 0){
             return Ok(sorted);
         }
         return Err("User doesnt exist");
     }),
 })
+
+function generateId(): Principal {
+    const randomBytes = new Array(29)
+        .fill(0)
+        .map((_) => Math.floor(Math.random() * 256));
+
+    return Principal.fromUint8Array(Uint8Array.from(randomBytes));
+}
 
 
 // function mergeSort(arra: Vec(User)): Vec(User) {
