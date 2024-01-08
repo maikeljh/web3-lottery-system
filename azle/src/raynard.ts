@@ -21,6 +21,8 @@ import {
     int
 } from 'azle';
 
+var cron = require('node-cron');
+
 // Interfaces used for Lottery
 enum LotteryType {
     Private = "PRIVATE",
@@ -496,3 +498,56 @@ function generateId(): Principal {
     return Principal.fromUint8Array(Uint8Array.from(randomBytes));
 }
 
+function checkCompletedLotteries(): void {
+    for (const lottery of lotteries.values()) {
+        if (lottery.endedAt <= BigInt(Math.floor(performance.now())) * 1000000n && !lottery.isCompleted) {
+        
+            // Change to completed
+            lottery.isCompleted = true;
+
+            // Randomly select winners
+            const winners = selectWinners(lottery.prizes, lottery.participants);
+
+            winners.forEach((winner) => {
+                lottery.winners.push(winner)
+            })
+    
+            // Update the lottery winners
+            lotteries.insert(lottery.id, lottery)
+        }
+    }
+}
+
+function selectWinners(prizes: Vec<PrizeDAO>, participants: Vec<Principal>): Vec<Principal> {
+    const winners: Principal[] = []
+  
+    // Shuffle the participants
+    for (let i = participants.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [participants[i], participants[j]] = [participants[j], participants[i]];
+    }
+  
+    for (const prize of prizes) {
+        let winnerIndex = Math.floor(Math.random() * participants.length);
+        const winner = participants[winnerIndex];
+
+        // Check if the winner already won before
+        if (!winners.includes(winner)) {
+            winners.push(winner);
+        } else {
+
+            // If yes, select a different winner
+            while (winners.includes(participants[winnerIndex])) {
+                winnerIndex = Math.floor(Math.random() * participants.length);
+            }
+            winners.push(participants[winnerIndex]);
+        }
+    }
+  
+    return winners;
+}
+
+// Check completed lottery every minute
+cron.schedule('* * * * *', () => {
+    checkCompletedLotteries;
+});
