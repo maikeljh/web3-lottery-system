@@ -98,6 +98,15 @@ const LotteryDetailPayload = Record({
 })
 type LotteryDetailPayload = typeof LotteryDetailPayload.tsType
 
+const LotteryPreviewPayload = Record({
+    id: Principal,
+    title: text,
+    participantsAmount: int,
+    endedAt: nat64,
+    lotteryBanner: blob,
+})
+type LotteryPreviewPayload = typeof LotteryPreviewPayload.tsType
+
 const Error = Variant({
     InvalidPayload: text,
     InvalidId: text,
@@ -285,20 +294,35 @@ export default Canister({
             })
         }
     }),
-    listPublicLotteries: query([], Result(Vec(LotteryDAO), Error), () => {
+    listPublicLotteries: query([], Result(Vec(LotteryPreviewPayload), Error), () => {
         try {
             const publicLotteries = lotteries.values().filter((lottery) => {
                 return lottery.types === LotteryType.Public && lottery.isCompleted === false;
             });
+
+            const previewPublicLotteries: LotteryPreviewPayload[] = []
+
+            publicLotteries.forEach((lottery) => {
+                
+                const previewLottery: LotteryPreviewPayload = {
+                    id: lottery.id,
+                    title: lottery.title,
+                    participantsAmount: lottery.participantsAmount,
+                    endedAt: lottery.endedAt,
+                    lotteryBanner: lottery.lotteryBanner,
+                }
+
+                previewPublicLotteries.push(previewLottery)
+            })
         
-            return Ok(publicLotteries);
+            return Ok(previewPublicLotteries);
         } catch (error:any){
             return Err({
                 Fail: `Failed to display public lotteries: ${error}`
             })
         }
     }),
-    hostedOngoingLotteries: query([Principal], Result(Vec(LotteryDAO), Error), (userId) => {
+    hostedOngoingLotteries: query([Principal], Result(Vec(LotteryPreviewPayload), Error), (userId) => {
         try {
 
             // validating user
@@ -316,15 +340,30 @@ export default Canister({
             const hostedOngoingLotteries = lotteries.values().filter((lottery) => {
                 return lottery.hostId === userId && lottery.isCompleted === false;
             });
+
+            const previewHostedOngoingLotteries: LotteryPreviewPayload[] = []
+
+            hostedOngoingLotteries.forEach((lottery) => {
+                
+                const previewLottery: LotteryPreviewPayload = {
+                    id: lottery.id,
+                    title: lottery.title,
+                    participantsAmount: lottery.participantsAmount,
+                    endedAt: lottery.endedAt,
+                    lotteryBanner: lottery.lotteryBanner,
+                }
+
+                previewHostedOngoingLotteries.push(previewLottery)
+            })
         
-            return Ok(hostedOngoingLotteries);
+            return Ok(previewHostedOngoingLotteries);
         } catch (error:any){
             return Err({
                 Fail: `Failed to display ongoing hosted lotteries: ${error}`
             })
         }
     }),
-    hostedCompletedLotteries: query([Principal], Result(Vec(LotteryDAO), Error), (userId) => {
+    hostedCompletedLotteries: query([Principal], Result(Vec(LotteryPreviewPayload), Error), (userId) => {
         try {
 
             // validating user
@@ -342,15 +381,30 @@ export default Canister({
             const hostedCompletedLotteries = lotteries.values().filter((lottery) => {
                 return lottery.hostId === userId && lottery.isCompleted === true;
             });
+
+            const previewHostedCompletedLotteries: LotteryPreviewPayload[] = []
+
+            hostedCompletedLotteries.forEach((lottery) => {
+                
+                const previewLottery: LotteryPreviewPayload = {
+                    id: lottery.id,
+                    title: lottery.title,
+                    participantsAmount: lottery.participantsAmount,
+                    endedAt: lottery.endedAt,
+                    lotteryBanner: lottery.lotteryBanner,
+                }
+
+                previewHostedCompletedLotteries.push(previewLottery)
+            })
         
-            return Ok(hostedCompletedLotteries);
+            return Ok(previewHostedCompletedLotteries);
         } catch (error:any){
             return Err({
                 Fail: `Failed to display completed hosted lotteries: ${error}`
             })
         }
     }),
-    participatedOngoingLotteries: query([Principal], Result(Vec(LotteryDAO), Error), (userId) => {
+    participatedOngoingLotteries: query([Principal], Result(Vec(LotteryPreviewPayload), Error), (userId) => {
         try {
 
             // validating user
@@ -368,15 +422,30 @@ export default Canister({
             const participatedOngoingLotteries = lotteries.values().filter((lottery) => {
                 return lottery.participants.includes(userId) && lottery.hostId !== userId && lottery.isCompleted === false;
             });
+
+            const previewParticipatedOngoingLotteries: LotteryPreviewPayload[] = []
+
+            participatedOngoingLotteries.forEach((lottery) => {
+                
+                const previewLottery: LotteryPreviewPayload = {
+                    id: lottery.id,
+                    title: lottery.title,
+                    participantsAmount: lottery.participantsAmount,
+                    endedAt: lottery.endedAt,
+                    lotteryBanner: lottery.lotteryBanner,
+                }
+
+                previewParticipatedOngoingLotteries.push(previewLottery)
+            })
         
-            return Ok(participatedOngoingLotteries);
+            return Ok(previewParticipatedOngoingLotteries);
         } catch (error:any){
             return Err({
                 Fail: `Failed to display ongoing participated lotteries: ${error}`
             })
         }
     }),
-    participatedCompletedLotteries: query([Principal], Result(Vec(LotteryDAO), Error), (userId) => {
+    participatedCompletedLotteries: query([Principal], Result(Vec(LotteryPreviewPayload), Error), (userId) => {
         try {
 
             // validating user
@@ -394,8 +463,23 @@ export default Canister({
             const participatedCompletedLotteries = lotteries.values().filter((lottery) => {
                 return lottery.participants.includes(userId) && lottery.hostId !== userId && lottery.isCompleted === true;
             });
+
+            const previewParticipatedCompletedLotteries: LotteryPreviewPayload[] = []
+
+            participatedCompletedLotteries.forEach((lottery) => {
+                
+                const previewLottery: LotteryPreviewPayload = {
+                    id: lottery.id,
+                    title: lottery.title,
+                    participantsAmount: lottery.participantsAmount,
+                    endedAt: lottery.endedAt,
+                    lotteryBanner: lottery.lotteryBanner,
+                }
+
+                previewParticipatedCompletedLotteries.push(previewLottery)
+            })
         
-            return Ok(participatedCompletedLotteries);
+            return Ok(previewParticipatedCompletedLotteries);
         } catch (error:any){
             return Err({
                 Fail: `Failed to display completed participated lotteries: ${error}`
