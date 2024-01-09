@@ -52,6 +52,7 @@ type PrizePayload = typeof PrizePayload.tsType
 const LotteryDAO = Record({
     id: Principal,
     types: text,
+    groupId: Opt(Principal),
     title: text,
     description: text,
     prizes: Vec(PrizeDAO),
@@ -68,6 +69,7 @@ type LotteryDAO = typeof LotteryDAO.tsType
 
 const LotteryPayload = Record({
     types: text,
+    groupId: Opt(Principal),
     title: text,
     description: text,
     prizes: Vec(PrizePayload),
@@ -81,6 +83,7 @@ type LotteryPayload = typeof LotteryPayload.tsType
 const LotteryDetailPayload = Record({
     id: Principal,
     types: text,
+    groupId: Opt(Principal),
     title: text,
     description: text,
     prizes: Vec(PrizeDAO),
@@ -189,6 +192,8 @@ type DetailGroupPayload = typeof DetailGroupPayload.tsType
 const Error = Variant({
     InvalidPayload: text,
     InvalidId: text,
+    InvalidType: text,
+    InvalidGroup: text,
     Fail: text
 })
 
@@ -205,6 +210,11 @@ export default Canister({
             // Validating payload attributes
             if (!payload.types || !payload.title || !payload.description || !payload.prizes || !payload.hostId || !payload.createdAt || !payload.endedAt || !payload.lotteryBanner) {
                 return Err({ InvalidPayload: `Payload is not valid!`})
+            }
+
+            // Validating lottery type
+            if (!(payload.types === `public` || payload.types === `private` || payload.types === `group`)){
+                return Err({ InvalidType: `Type is not valid!`})
             }
             
             let lotteryPrizes: PrizeDAO[] = []
@@ -232,28 +242,53 @@ export default Canister({
             while(!("None" in lotteries.get(lotteryId))) {
                 lotteryId = generateId()
             }
-
             const lottery = {
                 id: lotteryId,
+                types: payload.types,
+                groupId: payload.groupId,
+                title: payload.title,
+                description: payload.description,
+                prizes: lotteryPrizes,
                 participants: [],
                 participantsAmount: 0n,
-                winners: [],
-                isCompleted: false,
-                types: payload.types,
-                description: payload.description,
-                title: payload.title,
-                prizes: lotteryPrizes,
                 hostId: payload.hostId,
+                winners: [],
                 createdAt: payload.createdAt,
                 endedAt: payload.endedAt,
-                lotteryBanner: payload.lotteryBanner
+                lotteryBanner: payload.lotteryBanner,
+                isCompleted: false
+            }
+
+
+        
+            // Checking if group exists
+            if (payload.types === `group`){
+                // Check if payload has groupId
+                if (!payload.groupId){
+                    return Err({ InvalidGroup: `Group is not valid!`})
+                }
+
+                 // Validating groupId payload
+                const id = payload.groupId.Some;
+                if (!id?._isPrincipal){
+                    return Err({InvalidId: `Id is not valid`})
+                }
+                // Validating group existance
+                const groupOpt = groups.get(id)
+                if ("None" in groupOpt){
+                    return Err({InvalidGroup: `Group does not exist`})
+                }
+
+                // Validated, Adding lottery to group
+                const group: GroupDAO = groupOpt.Some
+                group.groupLotteries.push(lottery.id)
+                groups.insert(id, group);
             }
 
             lotteries.insert(lottery.id, lottery)
-
             return Ok(lottery);
         } catch (error: any) {
-            return Err({Fail : `Failed to add project: ${error}`})
+            return Err({Fail : `Failed to add lottery: ${error}`})
         }
     }),
 
@@ -293,6 +328,7 @@ export default Canister({
             const detailLottery: LotteryDetailPayload = {
                 id: lottery.id,
                 types: lottery.types,
+                groupId: lottery.groupId,
                 title: lottery.title,
                 description: lottery.description,
                 prizes: lottery.prizes,
