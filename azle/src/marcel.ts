@@ -87,13 +87,29 @@ const LotteryDetailPayload = Record({
     participants: Vec(User),
     participantsAmount: int,
     hostId: Principal,
-    winners: Vec(Principal),
     createdAt: nat64,
     endedAt: nat64,
     lotteryBanner: blob,
     isCompleted: bool,
 })
 type LotteryDetailPayload = typeof LotteryDetailPayload.tsType
+
+const CompletedLotteryPayload = Record({
+    id: Principal,
+    types: text,
+    title: text,
+    description: text,
+    prizes: Vec(PrizeDAO),
+    participants: Vec(User),
+    participantsAmount: int,
+    winners: Vec(User),
+    hostId: Principal,
+    createdAt: nat64,
+    endedAt: nat64,
+    lotteryBanner: blob,
+    isCompleted: bool,
+})
+type CompletedLotteryPayload = typeof CompletedLotteryPayload.tsType
 
 
 /* Nah gw masih ragu Roles ini perlu id unik ga tapi setelah dipikir" perlu buat stableBtreeMap nya atau kalau ga ntar
@@ -283,7 +299,6 @@ export default Canister({
                 participants: lotteryParticipants,
                 participantsAmount: BigInt(lotteryParticipants.length),
                 hostId: lottery.id,
-                winners: lottery.winners,
                 createdAt: lottery.createdAt,
                 endedAt: lottery.endedAt,
                 lotteryBanner: lottery.lotteryBanner,
@@ -291,6 +306,79 @@ export default Canister({
             }
 
             return Ok(detailLottery);
+        } catch (error:any) {
+            return Err({
+                Fail : `Failed to get lottery detail: ${error}`
+            })
+        }
+    }),
+
+    completedLotteryDetail: update([Principal], Result(CompletedLotteryPayload, Error), (lotteryId) => {
+        try {
+            // Validating lottery id
+            if (!lotteryId) {
+                return Err({ InvalidPayload: `Lottery id is not valid!` });
+            }
+
+            let lotteryParticipants: User[] = []
+
+            let lotteryWinners: User[] = []
+
+            const lotteryOpt = lotteries.get(lotteryId)
+
+            if ("None" in lotteryOpt) {
+                return Err({
+                    InvalidId: `Lottery with that id doesn't exist`
+                })
+            }
+
+            const lottery = lotteryOpt.Some
+
+            lottery.participants.forEach((userId) => {
+                const userOpt = users.get(userId)
+                
+                if ("None" in userOpt) {
+                    return Err({
+                        InvalidId: `User with that id doesn't exist`
+                    })
+                }
+
+                let user = userOpt.Some
+
+                lotteryParticipants = [...lotteryParticipants, user]
+            })
+
+            lottery.winners.forEach((userId) => {
+                const winnerOpt = users.get(userId)
+
+                if ("None" in winnerOpt) {
+                    return Err({
+                        InvalidId: `USer with that id doesn't exist`
+                    })
+                }
+
+                let winner = winnerOpt.Some
+
+                lotteryWinners = [...lotteryWinners, winner]
+            })
+
+            const detailCompletedLottery: CompletedLotteryPayload = {
+                id: lottery.id,
+                types: lottery.types,
+                title: lottery.title,
+                description: lottery.description,
+                prizes: lottery.prizes,
+                participants: lotteryParticipants,
+                participantsAmount: BigInt(lotteryParticipants.length),
+                winners: lotteryWinners,
+                hostId: lottery.id,
+                createdAt: lottery.createdAt,
+                endedAt: lottery.endedAt,
+                lotteryBanner: lottery.lotteryBanner,
+                isCompleted: lottery.isCompleted,
+            }
+
+            return Ok(detailCompletedLottery);
         } catch (error:any) {
             return Err({
                 Fail : `Failed to get lottery detail: ${error}`
