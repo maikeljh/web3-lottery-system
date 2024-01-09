@@ -213,7 +213,7 @@ export default Canister({
             }
 
             // Validating lottery type
-            if (!(payload.types === `public` || payload.types === `private` || payload.types === `group`)){
+            if (!(payload.types === LotteryType.Public || payload.types === LotteryType.Private || payload.types === LotteryType.Group)){
                 return Err({ InvalidType: `Type is not valid!`})
             }
             
@@ -262,7 +262,7 @@ export default Canister({
 
         
             // Checking if group exists
-            if (payload.types === `group`){
+            if (payload.types === LotteryType.Group){
                 // Check if payload has groupId
                 if (!payload.groupId){
                     return Err({ InvalidGroup: `Group is not valid!`})
@@ -421,7 +421,7 @@ export default Canister({
             })
         }
     }),
-
+    
     createGroup: update([GroupPayload], Result(GroupDAO, Error), (payload) => {
         try {
             if (!payload.avatar || !payload.name || !payload.roles || !payload.ownerId) {
