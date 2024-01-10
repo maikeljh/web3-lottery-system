@@ -77,15 +77,13 @@ function App() {
         data-isOpen={isOpen}
         initial={{ borderRadius: 50 }}
         style={{
-          background: "white",
+          background: "primary-2-400",
           width: isOpen ? "400px" : "100px",
           height: isOpen ? "200px" : "100px",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
-          border: "2px solid black", // Add black border
-          borderRadius: "10px", // Optional: Add border-radius
         }}
         className="parent"
         onClick={onButtonClick}
@@ -95,7 +93,7 @@ function App() {
           style={{
             width: "40px",
             height: "40px",
-            background: "#f107a3",
+            background: "white",
             borderRadius: "50%",
           }}
           className="child"
