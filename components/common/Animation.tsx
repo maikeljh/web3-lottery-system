@@ -68,8 +68,6 @@ function App() {
         justifyContent: "center",
         alignItems: "center",
         height: "100vh",
-        border: "2px solid black", // Add black border
-        borderRadius: "10px", // Optional: Add border-radius
       }}
     >
       <motion.div
@@ -77,13 +75,15 @@ function App() {
         data-isOpen={isOpen}
         initial={{ borderRadius: 50 }}
         style={{
-          background: "primary-2-400",
+          background: "#FFC16A",
           width: isOpen ? "400px" : "100px",
           height: isOpen ? "200px" : "100px",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
+          border: "5px solid black", // Add black border
+          borderRadius: "10px", // Optional: Add border-radius
         }}
         className="parent"
         onClick={onButtonClick}
@@ -95,6 +95,7 @@ function App() {
             height: "40px",
             background: "white",
             borderRadius: "50%",
+            
           }}
           className="child"
         />
