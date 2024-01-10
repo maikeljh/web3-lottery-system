@@ -10,6 +10,7 @@ import Modal4 from "../components/modals/FailedToCreateGroup";
 import Modal5 from "../components/modals/FailedToCreateLottery";
 import Modal6 from "../components/modals/SuccessfullCreateLotteryGroup";
 import Modal7 from "../components/modals/InviteParticipants";
+import Animate from "../components/common/Animation";
 export default function Home() {
   const [message, setMessage] = useState<number>();
   const [isLoading, setLoading] = useState<boolean>(false);
@@ -29,5 +30,5 @@ export default function Home() {
     }
   };
   // return <div>Home</div>;
-  return <Modal7></Modal7>;
+  return <Animate></Animate>;
 }
