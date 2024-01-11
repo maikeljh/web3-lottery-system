@@ -1000,6 +1000,8 @@ export default Canister({
             group.members.filter((memberId) => 
                 memberId.toText() !== userId.toText()
             )
+            // Update removal
+            groups.insert(group.id, group)
 
             return Ok(group);
         } catch (error: any) {
@@ -1054,6 +1056,8 @@ export default Canister({
             group.name = payload.name
             group.avatar = payload.avatar
             group.roles = groupRoles
+            // Update insert
+            groups.insert(group.id, group)
 
             return Ok(group);
         } catch (error: any) {
