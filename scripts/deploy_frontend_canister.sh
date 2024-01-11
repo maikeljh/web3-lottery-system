@@ -28,6 +28,10 @@ if [[ $ENV == "local" ]]; then
 
     bash ./scripts/getCanisterIds.sh "$ENV"
 
+    dfx deps pull
+
+    dfx deps deploy
+
     cd ..
 
     bash ./scripts/backendCanisterId.sh

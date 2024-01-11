@@ -8,11 +8,12 @@ import Notif from "../../public/assets/notif.png";
 import User from "../../public/assets/user.png";
 import Ok from "../../public/assets/ok.png";
 import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const canisterId = useSearchParams().get("canisterId");
 
   return (
     <>
@@ -31,26 +32,30 @@ const Navbar = () => {
         </Flex>
         <Flex align="center" fontWeight={"bold"}>
           <Link
-            href="/"
+            href={`/?canisterId=${canisterId}`}
             className={`px-8 h-full flex items-center ${
               pathname === "/" ? "text-primary-2-400 underline" : ""
             } hover:text-primary-2-400`}
           >
             Home
           </Link>
-          <Link
-            href="/lotteries"
-            className={`px-8 relative group h-full flex items-center ${
+          <div
+            className={`relative group h-full flex items-center ${
               pathname.startsWith("/lotteries")
                 ? "text-primary-2-400 underline"
                 : ""
             } hover:text-primary-2-400`}
           >
-            Lotteries
+            <Link
+              href={`/lotteries?canisterId=${canisterId}`}
+              className="px-8 h-full flex justify-center items-center"
+            >
+              Lotteries
+            </Link>
             <div className="hidden group-hover:block absolute top-[61px] bg-primary-1-500 left-0 rounded-b-lg rounded-tr-lg p-4 w-[14rem]">
               <Flex direction={"column"} gap={"5px"}>
                 <Link
-                  href="/lotteries"
+                  href={`/lotteries?canisterId=${canisterId}`}
                   className={`text-white hover:text-primary-2-400 ${
                     pathname === "/lotteries"
                       ? "!text-primary-2-400 underline"
@@ -60,7 +65,7 @@ const Navbar = () => {
                   Public Lotteries
                 </Link>
                 <Link
-                  href="/lotteries/hosted"
+                  href={`/lotteries/hosted?canisterId=${canisterId}`}
                   className={`text-white hover:text-primary-2-400 ${
                     pathname.startsWith("/lotteries/hosted")
                       ? "!text-primary-2-400 underline"
@@ -70,7 +75,7 @@ const Navbar = () => {
                   Hosted Lotteries
                 </Link>
                 <Link
-                  href="/lotteries/participated"
+                  href={`/lotteries/participated?canisterId=${canisterId}`}
                   className={`text-white hover:text-primary-2-400 ${
                     pathname.startsWith("/lotteries/participated")
                       ? "!text-primary-2-400 underline"
@@ -81,9 +86,9 @@ const Navbar = () => {
                 </Link>
               </Flex>
             </div>
-          </Link>
+          </div>
           <Link
-            href="/groups"
+            href={`/groups?canisterId=${canisterId}`}
             className={`px-8 h-full flex items-center  ${
               pathname.startsWith("/groups")
                 ? "text-primary-2-400 underline"
@@ -93,7 +98,7 @@ const Navbar = () => {
             Groups
           </Link>
           <Link
-            href="/leaderboard"
+            href={`/leaderboard?canisterId=${canisterId}`}
             className={`px-8 h-full flex items-center ${
               pathname.startsWith("/leaderboard")
                 ? "text-primary-2-400 underline"
@@ -105,7 +110,10 @@ const Navbar = () => {
         </Flex>
         <Spacer />
         <Flex mr={5} align="center" padding="0.75rem">
-          <Link href="/lotteries/create" className="px-8">
+          <Link
+            href={`/lotteries/create?canisterId=${canisterId}`}
+            className="px-8"
+          >
             <Button
               className="bg-primary-2-400"
               textColor={"black"}
@@ -159,7 +167,7 @@ const Navbar = () => {
                   <Flex padding={"1rem"}>
                     <Link
                       className="mx-auto text-[#3E98EB]"
-                      href="/notifications"
+                      href={`/notifications?canisterId=${canisterId}`}
                       onClick={() => setOpen(false)}
                     >
                       View All
@@ -171,7 +179,10 @@ const Navbar = () => {
               <></>
             )}
           </div>
-          <Link className="px-4 cursor-pointer" href={"/profile"}>
+          <Link
+            className="px-4 cursor-pointer"
+            href={`/profile?canisterId=${canisterId}`}
+          >
             <Image src={User} alt="user" className="w-[1.75rem]" />
           </Link>
         </Flex>

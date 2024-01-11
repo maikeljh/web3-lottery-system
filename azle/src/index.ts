@@ -20,12 +20,6 @@ import {
   int,
 } from "azle";
 
-const {
-  ToadScheduler,
-  SimpleIntervalJob,
-  AsyncTask,
-} = require("toad-scheduler");
-
 // Interfaces used for Lottery
 enum LotteryType {
   Private = "PRIVATE",
@@ -46,10 +40,8 @@ type User = typeof User.tsType;
 
 const UserPayload = Record({
   name: text,
-  points: nat64,
   avatar: blob,
-  hostedLotteries: Vec(Principal),
-  participatedLotteries: Vec(Principal),
+  id: Principal,
 });
 
 type UserPayload = typeof UserPayload.tsType;
@@ -250,27 +242,41 @@ let notifications = StableBTreeMap<Principal, NotificationDAO>(6);
 export default Canister({
   // User
   createUser: update([UserPayload], Result(User, text), (payload) => {
-    if (
-      !payload.name ||
-      !payload.points ||
-      !payload.avatar ||
-      !payload.hostedLotteries ||
-      !payload.participatedLotteries
-    ) {
+    if (!payload.name || !payload.avatar || !payload.id) {
       return Err("Invalid input");
     }
-    const id = generateId();
     const user: User = {
-      id,
+      id: payload.id,
       name: payload.name,
-      points: payload.points,
+      points: 0n,
       avatar: payload.avatar,
-      hostedLotteries: payload.hostedLotteries,
-      participatedLotteries: payload.participatedLotteries,
+      hostedLotteries: [],
+      participatedLotteries: [],
     };
     users.insert(user.id, user);
     return Ok(user);
   }),
+
+  getUser: query([Principal], Result(User, Error), (id) => {
+    if (!id) {
+      return Err({
+        InvalidId: `Invalid id!`,
+      });
+    }
+
+    const userOpt = users.get(id);
+
+    if ("None" in userOpt) {
+      return Err({
+        InvalidId: `User with that id doesn't exist`,
+      });
+    }
+
+    const user: User = userOpt.Some;
+
+    return Ok(user);
+  }),
+
   getUsers: query([], Vec(User), () => {
     return users.values();
   }),
