@@ -143,7 +143,7 @@ const NotificationDAO = Record({
 type NotificationDAO = typeof NotificationDAO.tsType;
 
 const NotificationPayload = Record({
-  ownerId: Principal,
+  id: Principal,
   description: text,
   isRead: bool,
 });
@@ -838,16 +838,19 @@ export default Canister({
         const userNotifications = notifications
           .values()
           .filter((notification) => {
-            return notification["ownerId"] === userId;
+            return (
+              notification["ownerId"] === userId &&
+              notification["isRead"] === false
+            );
           });
 
         const previewUserNotifications: NotificationPayload[] = [];
 
         userNotifications.forEach((notification) => {
           const previewUserNotification: NotificationPayload = {
-            ownerId: notification.ownerId,
             description: notification.description,
             isRead: notification.isRead,
+            id: notification.id,
           };
           previewUserNotifications.push(previewUserNotification);
         });

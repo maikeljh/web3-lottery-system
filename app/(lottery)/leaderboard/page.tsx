@@ -1,41 +1,53 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
-import { Box, Button, Flex, Spacer } from "@chakra-ui/react";
-import Image from "next/image";
-import User from "../../../public/assets/user.png";
-import { useState } from "react";
-import Leader from "../../../public/assets/leader.png";
+import { Button, Flex, Spacer } from "@chakra-ui/react";
+import { makeAzleActor } from "../../../service/actor";
+import { _SERVICE as AZLE } from "@/config/declarations/dfx_generated/azle.did";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/use-auth-client";
+import { Principal } from "@dfinity/principal";
+
+interface Winners {
+  id: Principal;
+  hostedLotteries: Principal[];
+  name: string;
+  participatedLotteries: Principal[];
+  points: bigint;
+  avatar: Uint8Array | number[];
+}
 
 const Page = () => {
-  const [data, setData] = useState([
-    {
-      username: "username",
-      name: "Sebastian",
-      point: 1124,
-    },
-    {
-      username: "username",
-      name: "Sebastian",
-      point: 1024,
-    },
-    {
-      username: "username",
-      name: "Sebastian",
-      point: 924,
-    },
-    {
-      username: "username",
-      name: "Sebastian",
-      point: 824,
-    },
-    {
-      username: "username",
-      name: "Sebastian",
-      point: 724,
-    },
-  ]);
+  const [winners, setWinners] = useState<Winners[]>([]);
+  const [maxWinner, setMaxWinner] = useState(5);
+  const router = useRouter();
+  const { principal, logout, isAuthenticated, login } = useAuth();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const azle: AZLE = await makeAzleActor();
+        const users = await azle.getLeaderboard();
+        console.log(users);
+        if ("Ok" in users) {
+          setWinners(users.Ok);
+        }
+      } catch (error) {
+        console.log(error);
+        return;
+      }
+    };
+
+    if (!isAuthenticated) {
+      login();
+      return;
+    }
+
+    fetchData();
+  }, [isAuthenticated, login, principal, router]);
 
   const loadMore = () => {
-    setData(data.concat(data));
+    setMaxWinner(maxWinner + 5);
   };
 
   return (
@@ -45,74 +57,103 @@ const Page = () => {
         <Flex direction={"row"} className="w-full mt-24">
           <Flex className="w-1/2 mx-auto text-white" direction={"row"}>
             <div className="w-full text-center bg-primary-1-600 h-3/5 mt-auto p-4 rounded-tl-xl rounded-bl-xl relative pb-[9rem]">
-              <Flex
-                align="center"
-                className="border-3 border-primary-2-400 rounded-full w-[7rem] mx-auto absolute top-[-80px] left-[50px]"
-                direction={"column"}
-              >
-                <Image src={Leader} alt="leader" className="w-[7rem]" />
-                <div className="absolute bottom-[-8px]">
-                  <div className="relative">
-                    <div className="w-5 h-5 bg-primary-2-400 transform rotate-45 flex items-center justify-center rounded-sm">
-                      <span className="transform -rotate-45 text-white text-xs font-bold">
-                        2
-                      </span>
+              {winners && winners[1] && (
+                <>
+                  <Flex
+                    align="center"
+                    className="bg-white border-3 border-primary-2-400 rounded-full w-[7rem] mx-auto absolute top-[-80px] left-[50px]"
+                    direction={"column"}
+                  >
+                    <img
+                      src={`data:image/png;base64,${Buffer.from(
+                        winners[1].avatar
+                      ).toString("base64")}`}
+                      alt="leader"
+                      className="w-[7rem]"
+                    />
+                    <div className="absolute bottom-[-8px]">
+                      <div className="relative">
+                        <div className="w-5 h-5 bg-primary-2-400 transform rotate-45 flex items-center justify-center rounded-sm">
+                          <span className="transform -rotate-45 text-white text-xs font-bold">
+                            2
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Flex>
+                  <p className="mt-8">{winners[1].name}</p>
+                  <p>{Number(winners[1].points)} points</p>
+                  <p>@user-{winners[1].id.toString()}</p>
+                </>
+              )}
+            </div>
+            {winners && winners[0] && (
+              <div className="w-full text-center bg-primary-1-500 p-4 rounded-tl-xl rounded-tr-xl relative">
+                <Flex
+                  align="center"
+                  className="bg-white border-3 border-primary-2-400 rounded-full w-[7rem] mx-auto absolute top-[-80px] left-[50px]"
+                  direction={"column"}
+                >
+                  <img
+                    src={`data:image/png;base64,${Buffer.from(
+                      winners[0].avatar
+                    ).toString("base64")}`}
+                    alt="leader"
+                    className="w-[7rem]"
+                  />
+                  <div className="absolute bottom-[-8px]">
+                    <div className="relative">
+                      <div className="w-5 h-5 bg-primary-2-400 transform rotate-45 flex items-center justify-center rounded-sm">
+                        <span className="transform -rotate-45 text-white text-xs font-bold">
+                          1
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Flex>
-              <p className="mt-12">Jackson</p>
-              <p>1847</p>
-              <p>@username</p>
-            </div>
-            <div className="w-full text-center bg-primary-1-500 p-4 rounded-tl-xl rounded-tr-xl relative">
-              <Flex
-                align="center"
-                className="border-3 border-primary-2-400 rounded-full w-[7rem] mx-auto absolute top-[-80px] left-[50px]"
-                direction={"column"}
-              >
-                <Image src={Leader} alt="leader" className="w-[7rem]" />
-                <div className="absolute bottom-[-8px]">
-                  <div className="relative">
-                    <div className="w-5 h-5 bg-primary-2-400 transform rotate-45 flex items-center justify-center rounded-sm">
-                      <span className="transform -rotate-45 text-white text-xs font-bold">
-                        1
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Flex>
-              <p className="mt-12">Jackson</p>
-              <p>1847</p>
-              <p>@username</p>
-              <div className="h-[6rem]"></div>
-            </div>
+                </Flex>
+                <p className="mt-8">{winners[0].name}</p>
+                <p>{Number(winners[0].points)} points</p>
+                <p>@user-{winners[0].id.toString()}</p>
+                <div className="h-[6rem]"></div>
+              </div>
+            )}
+
             <div className="w-full text-center bg-primary-1-600 h-3/5 mt-auto p-4 rounded-tr-xl rounded-br-xl relative pb-[9rem]">
-              <Flex
-                align="center"
-                className="border-3 border-primary-2-400 rounded-full w-[7rem] mx-auto absolute top-[-80px] left-[50px]"
-                direction={"column"}
-              >
-                <Image src={Leader} alt="leader" className="w-[7rem]" />
-                <div className="absolute bottom-[-8px]">
-                  <div className="relative">
-                    <div className="w-5 h-5 bg-primary-2-400 transform rotate-45 flex items-center justify-center rounded-sm">
-                      <span className="transform -rotate-45 text-white text-xs font-bold">
-                        3
-                      </span>
+              {winners && winners[2] && (
+                <>
+                  <Flex
+                    align="center"
+                    className="bg-white border-3 border-primary-2-400 rounded-full w-[7rem] mx-auto absolute top-[-80px] left-[50px]"
+                    direction={"column"}
+                  >
+                    <img
+                      src={`data:image/png;base64,${Buffer.from(
+                        winners[2].avatar
+                      ).toString("base64")}`}
+                      alt="leader"
+                      className="w-[7rem]"
+                    />
+                    <div className="absolute bottom-[-8px]">
+                      <div className="relative">
+                        <div className="w-5 h-5 bg-primary-2-400 transform rotate-45 flex items-center justify-center rounded-sm">
+                          <span className="transform -rotate-45 text-white text-xs font-bold">
+                            3
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </Flex>
-              <p className="mt-12">Jackson</p>
-              <p>1847</p>
-              <p>@username</p>
+                  </Flex>
+                  <p className="mt-8">{winners[2].name}</p>
+                  <p>{Number(winners[2].points)} points</p>
+                  <p>@user-{winners[2].id.toString()}</p>
+                </>
+              )}
             </div>
           </Flex>
         </Flex>
         <Flex direction={"column"} gap={"1rem"}>
-          {data &&
-            data.map((user, index) => (
+          {winners &&
+            winners.slice(3, maxWinner).map((user, index) => (
               <>
                 <Flex
                   bg="white"
@@ -132,30 +173,40 @@ const Page = () => {
                     align="center"
                     className="border-2 border-primary-2-400 rounded-full"
                   >
-                    <Image src={User} alt="user" className="w-[1.75rem]" />
+                    <img
+                      src={`data:image/png;base64,${Buffer.from(
+                        user.avatar
+                      ).toString("base64")}`}
+                      alt="user"
+                      className="w-[1.75rem]"
+                    />
                   </Flex>
                   <Flex direction={"column"} fontWeight={"semibold"}>
                     <p>{user.name}</p>
-                    <p>@{user.username}</p>
+                    <p>@user-{user.id.toString()}</p>
                   </Flex>
                   <Spacer />
-                  <p className="font-semibold">{user.point}</p>
+                  <p className="font-semibold">{Number(user.points)} points</p>
                 </Flex>
               </>
             ))}
         </Flex>
-        <Flex align={"center"} padding={"1rem"} width={"full"}>
-          <Button
-            width={"6rem"}
-            fontSize={"small"}
-            className="!bg-primary-1-400"
-            color={"white"}
-            mx={"auto"}
-            onClick={() => loadMore()}
-          >
-            Load More
-          </Button>
-        </Flex>
+        {maxWinner < winners.length ? (
+          <Flex align={"center"} padding={"1rem"} width={"full"}>
+            <Button
+              width={"6rem"}
+              fontSize={"small"}
+              className="!bg-primary-1-400"
+              color={"white"}
+              mx={"auto"}
+              onClick={() => loadMore()}
+            >
+              Load More
+            </Button>
+          </Flex>
+        ) : (
+          <></>
+        )}
       </Flex>
     </>
   );

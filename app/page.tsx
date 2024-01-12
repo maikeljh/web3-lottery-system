@@ -12,7 +12,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function Home() {
-  const { isAuthenticated, identity, principal, login, logout } = useAuth();
+  const { isAuthenticated, login } = useAuth();
   const router = useRouter();
   const canisterId = useSearchParams().get("canisterId");
 

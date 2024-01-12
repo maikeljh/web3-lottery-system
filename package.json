@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "WATCHPACK_POLLING=true next start",
     "lint": "next lint",
-    "start_replica": "dfx start --clean --background --host 127.0.0.1:8080",
+    "start_replica": "dfx start --background --host 127.0.0.1:8080",
     "start_replica_dev": "dfx start --background --host 127.0.0.1:8080",
     "deploy": "bash scripts/deploy_frontend_canister.sh  local",
     "install:all": "bash scripts/install.sh"

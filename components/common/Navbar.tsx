@@ -1,19 +1,75 @@
 "use client";
 
-import { Box, Button, Flex, Heading, Spacer } from "@chakra-ui/react";
+import { Button, Flex, Spacer } from "@chakra-ui/react";
 import Link from "next/link";
 import Logo from "../../public/assets/logo.png";
+import L from "../../public/assets/L.png";
 import Image from "next/image";
 import Notif from "../../public/assets/notif.png";
 import User from "../../public/assets/user.png";
 import Ok from "../../public/assets/ok.png";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useAuth } from "@/app/use-auth-client";
+import { makeAzleActor } from "../../service/actor";
+import { _SERVICE as AZLE } from "@/config/declarations/dfx_generated/azle.did";
+import { Principal } from "@dfinity/principal";
+
+interface Notification {
+  id: Principal;
+  description: string;
+  isRead: boolean;
+}
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
+  const [listOfNotifications, setNotifications] = useState<Notification[]>([]);
   const pathname = usePathname();
   const canisterId = useSearchParams().get("canisterId");
+
+  const { principal, isAuthenticated, login } = useAuth();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const azle: AZLE = await makeAzleActor();
+        const notifications = await azle.getNotificationListByUser(principal);
+        if ("Ok" in notifications) {
+          setNotifications(notifications.Ok);
+        }
+      } catch (error) {
+        console.log(error);
+        return;
+      }
+    };
+
+    if (isAuthenticated) fetchData();
+  }, [isAuthenticated, login, principal]);
+
+  const readNotification = async (id: Principal) => {
+    try {
+      const azle: AZLE = await makeAzleActor();
+      await azle.readNotification(principal);
+
+      const fetchData = async () => {
+        try {
+          const azle: AZLE = await makeAzleActor();
+          const notifications = await azle.getNotificationListByUser(principal);
+          if ("Ok" in notifications) {
+            setNotifications(notifications.Ok);
+          }
+        } catch (error) {
+          console.log(error);
+          return;
+        }
+      };
+
+      if (isAuthenticated) fetchData();
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+  };
 
   return (
     <>
@@ -141,29 +197,35 @@ const Navbar = () => {
                   >
                     <p className="font-semibold">Notifications</p>
                     <Spacer />
-                    <p className="text-[#3E98EB]">Mark all as read</p>
                   </Flex>
-                  <Flex
-                    bg="white"
-                    padding={"1rem"}
-                    className="border-b-[1px]"
-                    gap={"1rem"}
-                    align={"center"}
-                  >
-                    <Flex
-                      align="center"
-                      className="border-2 border-primary-2-400 rounded-full"
-                    >
-                      <Image src={User} alt="user" className="w-[1.75rem]" />
-                    </Flex>
-                    <p className="font-semibold">
-                      Lottery “Anjay” just ended. Check out the result!
-                    </p>
-                    <Spacer />
-                    <Flex align="center">
-                      <Image src={Ok} alt="ok" className="w-[1.75rem]" />
-                    </Flex>
-                  </Flex>
+                  {listOfNotifications &&
+                    listOfNotifications.slice(0, 3).map((item, idx) => (
+                      <Flex
+                        key={idx}
+                        bg="white"
+                        padding={"1rem"}
+                        className="border-b-[1px]"
+                        gap={"1rem"}
+                        align={"center"}
+                      >
+                        <Flex
+                          align="center"
+                          className="border-2 border-primary-2-400 rounded-full"
+                        >
+                          <Image src={L} alt="logo" className="w-[1.75rem]" />
+                        </Flex>
+                        <p className="font-semibold">{item.description}</p>
+                        <Spacer />
+                        <Flex align="center">
+                          <Image
+                            src={Ok}
+                            alt="ok"
+                            className="w-[1.75rem]"
+                            onClick={() => readNotification(item.id)}
+                          />
+                        </Flex>
+                      </Flex>
+                    ))}
                   <Flex padding={"1rem"}>
                     <Link
                       className="mx-auto text-[#3E98EB]"
