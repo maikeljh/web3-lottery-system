@@ -36,7 +36,12 @@ const Page = () => {
       }
     };
 
-    if (isAuthenticated) fetchData();
+    if (!isAuthenticated) {
+      login();
+      return;
+    }
+
+    fetchData();
   }, [isAuthenticated, login, principal]);
 
   const readNotification = async (id: Principal) => {
@@ -103,18 +108,22 @@ const Page = () => {
               </>
             ))}
         </Flex>
-        <Flex align={"center"} padding={"1rem"} width={"full"}>
-          <Button
-            width={"6rem"}
-            fontSize={"small"}
-            className="!bg-primary-1-400"
-            color={"white"}
-            mx={"auto"}
-            onClick={() => loadMore()}
-          >
-            Load More
-          </Button>
-        </Flex>
+        {maxNotif < listOfNotifications.length ? (
+          <Flex align={"center"} padding={"1rem"} width={"full"}>
+            <Button
+              width={"6rem"}
+              fontSize={"small"}
+              className="!bg-primary-1-400"
+              color={"white"}
+              mx={"auto"}
+              onClick={() => loadMore()}
+            >
+              Load More
+            </Button>
+          </Flex>
+        ) : (
+          <></>
+        )}
       </Flex>
     </>
   );

@@ -56,7 +56,7 @@ const Page = () => {
         avatar: profile.avatar,
         id: principal,
       });
-      console.log(user);
+
       if ("Ok" in user) {
         router.push(`/?canisterId=${canisterId}`);
       } else {

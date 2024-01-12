@@ -1,95 +1,57 @@
 "use client";
 
-import { Flex, Spacer } from "@chakra-ui/react";
+import { Button, Flex, Spacer } from "@chakra-ui/react";
 import Banner from "../../../../../public/assets/banner.png";
 import Search from "../../../../../public/assets/search.png";
 import Card from "@/components/common/Card";
 import Image from "next/image";
 import Link from "next/link";
+import { Principal } from "@dfinity/principal";
+import { makeAzleActor } from "@/service/actor";
+import { _SERVICE as AZLE } from "@/config/declarations/dfx_generated/azle.did";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/app/use-auth-client";
+
+interface Lottery {
+  id: Principal;
+  title: string;
+  participantsAmount: bigint;
+  endedAt: bigint;
+  lotteryBanner: Uint8Array | number[];
+}
 
 const Page = () => {
-  const data = [
-    {
-      image: Banner,
-      title: "Lottery Title",
-      description: (
-        <>
-          <p className="text-primary-3-600">1.2k participants</p>
-          <p className="text-primary-3-600">Ends at 10/12/23</p>
-        </>
-      ),
-    },
-    {
-      image: Banner,
-      title: "Lottery Title",
-      description: (
-        <>
-          <p className="text-primary-3-600">1.2k participants</p>
-          <p className="text-primary-3-600">Ends at 10/12/23</p>
-        </>
-      ),
-    },
-    {
-      image: Banner,
-      title: "Lottery Title",
-      description: (
-        <>
-          <p className="text-primary-3-600">1.2k participants</p>
-          <p className="text-primary-3-600">Ends at 10/12/23</p>
-        </>
-      ),
-    },
-    {
-      image: Banner,
-      title: "Lottery Title",
-      description: (
-        <>
-          <p className="text-primary-3-600">1.2k participants</p>
-          <p className="text-primary-3-600">Ends at 10/12/23</p>
-        </>
-      ),
-    },
-    {
-      image: Banner,
-      title: "Lottery Title",
-      description: (
-        <>
-          <p className="text-primary-3-600">1.2k participants</p>
-          <p className="text-primary-3-600">Ends at 10/12/23</p>
-        </>
-      ),
-    },
-    {
-      image: Banner,
-      title: "Lottery Title",
-      description: (
-        <>
-          <p className="text-primary-3-600">1.2k participants</p>
-          <p className="text-primary-3-600">Ends at 10/12/23</p>
-        </>
-      ),
-    },
-    {
-      image: Banner,
-      title: "Lottery Title",
-      description: (
-        <>
-          <p className="text-primary-3-600">1.2k participants</p>
-          <p className="text-primary-3-600">Ends at 10/12/23</p>
-        </>
-      ),
-    },
-    {
-      image: Banner,
-      title: "Lottery Title",
-      description: (
-        <>
-          <p className="text-primary-3-600">1.2k participants</p>
-          <p className="text-primary-3-600">Ends at 10/12/23</p>
-        </>
-      ),
-    },
-  ];
+  const [listOfLotteries, setLotteries] = useState<Lottery[]>([]);
+  const [maxLottery, setMaxLottery] = useState(10);
+
+  const { principal, isAuthenticated, login } = useAuth();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const azle: AZLE = await makeAzleActor();
+        const lotteries = await azle.participatedOngoingLotteries(principal);
+        if ("Ok" in lotteries) {
+          setLotteries(lotteries.Ok);
+        }
+        console.log(lotteries);
+      } catch (error) {
+        console.log(error);
+        return;
+      }
+    };
+
+    if (!isAuthenticated) {
+      login();
+      return;
+    }
+
+    fetchData();
+  }, [isAuthenticated, login, principal]);
+
+  const loadMore = () => {
+    setMaxLottery(maxLottery + 5);
+  };
 
   return (
     <>
@@ -114,20 +76,48 @@ const Page = () => {
             </div>
           </Flex>
           <Flex direction={"row"} gap={"2rem"} wrap={"wrap"}>
-            {data &&
-              data.map((lottery) => (
+            {listOfLotteries &&
+              listOfLotteries.map((lottery) => (
                 <>
                   <Link href="/lotteries/1" className="grow basis-[23%]">
                     <Card
-                      image={lottery.image}
+                      image={`data:image/png;base64,${Buffer.from(
+                        lottery.lotteryBanner
+                      ).toString("base64")}`}
                       title={lottery.title}
-                      description={lottery.description}
+                      description={
+                        <>
+                          <p className="text-primary-3-600">
+                            {Number(lottery.participantsAmount)} participants
+                          </p>
+                          <p className="text-primary-3-600">
+                            Ends at{" "}
+                            {new Date(Number(lottery.endedAt)).toString()}
+                          </p>
+                        </>
+                      }
                       basis={"23%"}
                     />
                   </Link>
                 </>
               ))}
           </Flex>
+          {maxLottery < listOfLotteries.length ? (
+            <Flex align={"center"} padding={"1rem"} width={"full"}>
+              <Button
+                width={"6rem"}
+                fontSize={"small"}
+                className="!bg-primary-1-400"
+                color={"white"}
+                mx={"auto"}
+                onClick={() => loadMore()}
+              >
+                Load More
+              </Button>
+            </Flex>
+          ) : (
+            <></>
+          )}
         </Flex>
       </Flex>
     </>

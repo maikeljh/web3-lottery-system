@@ -2,7 +2,6 @@
 "use client";
 
 import Card from "@/components/common/Card";
-import Banner from "../../../../public/assets/banner.png";
 import { Button, Flex } from "@chakra-ui/react";
 import { ChangeEvent, useState } from "react";
 import Add from "../../../../public/assets/add.png";
@@ -77,7 +76,7 @@ const Page = () => {
               data.map((card) => (
                 <>
                   <Card
-                    image={Banner}
+                    image={"../../public/assets/banner.png"}
                     title={card.title}
                     description={card.description}
                     basis={"23%"}

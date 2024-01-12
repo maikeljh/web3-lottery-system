@@ -1,9 +1,10 @@
+/* eslint-disable @next/next/no-img-element */
 import { Flex } from "@chakra-ui/react";
 import Image, { StaticImageData } from "next/image";
-import { MouseEventHandler, ReactElement } from "react";
+import { ReactElement } from "react";
 
 interface CardProps {
-  image: StaticImageData;
+  image: string;
   title: string;
   description: ReactElement;
   basis?: string;
@@ -34,7 +35,7 @@ const Card: React.FC<CardProps> = ({
     >
       <Flex direction={"column"} gap={"10px"} w={"full"} mb={"auto"}>
         <Flex align="center">
-          <Image src={image} alt="banner" className="w-full h-auto" />
+          <img src={image} alt="banner" className="w-full h-auto" />
         </Flex>
         <p className="font-bold text-lg">{title}</p>
         {description}
