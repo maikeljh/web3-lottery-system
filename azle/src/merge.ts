@@ -174,7 +174,8 @@ const UserRole = Record({
     userId: Principal,
     groupId: Principal,
     username: text,
-    userRole: text
+    userRole: text,
+    rank: int
 })
 type UserRole = typeof UserRole.tsType
 
@@ -972,6 +973,11 @@ export default Canister({
             let role = roleOpt.Some
 
             // Add userRole
+
+            // First checking how many user roles has existted
+            const groupRoles = roles.values().filter((role) =>{
+                return role.groupId === groupID;
+            })
             const userroleID = {
                 userId: memberID,
                 groupId: groupID
@@ -981,6 +987,7 @@ export default Canister({
                 groupId: groupID,
                 username: member.name,
                 userRole: role.name,
+                rank: BigInt(0)
             }
             // Update group
             group.members.push(memberID);
@@ -1023,10 +1030,20 @@ export default Canister({
             }
 
             let group = groupOpt.Some
+            let user = userOpt.Some
             // Update group
             group.members.push(memberID);
-
+            // Make default user role (?)
+            const userRole: UserRole = {
+                userId: memberID,
+                groupId: groupID,
+                username: user.name,
+                userRole: "",
+                rank: BigInt(0)
+            }
+            // Insertions
             groups.insert(group.id, group);
+            userroles.insert({userId: memberID, groupId: groupID}, userRole)
             
             return Ok(group);
 
@@ -1185,9 +1202,25 @@ function checkCompletedLotteries(): void { // Noted
         
             // Change to completed
             lottery.isCompleted = true;
-
+            let winners = [];
             // Randomly select winners
-            const winners = selectWinners(lottery.prizes, lottery.participants);
+            if (lottery.types === LotteryType.Group){
+                const lotteryRolesOpt = roles.get(lottery.id)
+                const groupID = lottery.groupId.Some
+                
+                if ("None" in lotteryRolesOpt || !groupID){ // Invalid group, lottery will be determined as public/private
+                    winners = selectWinners(lottery.prizes, lottery.participants);
+                }
+                else{
+                    const lotteryRoles = roles.values().filter((role) => {
+                        return lottery.groupId.Some === role.groupId;
+                    });
+                    winners = selectWinnersGroup(lottery.prizes, lottery.participants, lotteryRoles, groupID)
+                }
+                
+            } else{
+                winners = selectWinners(lottery.prizes, lottery.participants); 
+            }
 
             winners.forEach((winner) => {
                 lottery.winners.push(winner)
@@ -1228,24 +1261,52 @@ function selectWinners(prizes: Vec<PrizeDAO>, participants: Vec<Principal>): Vec
     return winners;
 }
 
-function calculateProbability(member: Principal, totalParticipants: nat64, priorityRole: int): float64 {
+function calculateProbability(member: Principal, totalParticipants: number, priorityRole: int, totalRoles: number): number {
+    // Gua butuh: n participants, n roles, 
     const baseProbability = 1/Number(totalParticipants);
-    const adjustedProbability = baseProbability * (1 - (Number(priorityRole) - 1) * 0.1);
+    const adjustedProbability = baseProbability * (1 + (Number(totalRoles) - Number(priorityRole)) * 0.1);
     return adjustedProbability;
 }
 
-function selectWinnerGroup(prizes: Vec<PrizeDAO>, participants: Vec<Principal>): Vec<Principal> {
+function selectWinnersGroup(prizes: Vec<PrizeDAO>, participants: Vec<Principal>, roles: Vec<Roles>, groupID: Principal): Vec<Principal> {
     const winners: Principal[] = []
-  
-    // Shuffle the participants
-    for (let i = participants.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [participants[i], participants[j]] = [participants[j], participants[i]];
+    const tempWinners: Principal[] = []
+
+    // Determine participants probability
+    for (let i = participants.length-1; i> 0; i--){
+        let participantOpt = userroles.get({userId: participants[i], groupId: groupID});
+        let participant = participantOpt.Some
+        // ini gw bingung handlenya
+        if (!participant){
+            return winners
+        }
+        let probability = calculateProbability(participant.userId, participants.length, participant.rank, roles.length)
+        let randomNumber = Math.random()
+        if (randomNumber <= probability){
+            tempWinners.push(participants[i])
+        }
     }
-  
+    // Making sure amount of winners same or more than amount of prizes
+    while (tempWinners.length <= prizes.length){
+        for (let i = participants.length-1; i> 0; i--){
+            let participantOpt = userroles.get({userId: participants[i], groupId: groupID});
+            let participant = participantOpt.Some
+            // ini gw bingung handlenya
+            if (!participant){
+                return winners
+            }
+            let probability = calculateProbability(participant.userId, participants.length, participant.rank, roles.length)
+            let randomNumber = Math.random()
+            if (randomNumber <= probability){
+                tempWinners.push(participants[i])
+            }
+        }
+    }
+    
+    // Select winners
     for (const prize of prizes) {
-        let winnerIndex = Math.floor(Math.random() * participants.length);
-        const winner = participants[winnerIndex];
+        let winnerIndex = Math.floor(Math.random() * tempWinners.length);
+        const winner = tempWinners[winnerIndex];
 
         // Check if the winner already won before
         if (!winners.includes(winner)) {
@@ -1253,10 +1314,10 @@ function selectWinnerGroup(prizes: Vec<PrizeDAO>, participants: Vec<Principal>):
         } else {
 
             // If yes, select a different winner
-            while (winners.includes(participants[winnerIndex])) {
-                winnerIndex = Math.floor(Math.random() * participants.length);
+            while (winners.includes(tempWinners[winnerIndex])) {
+                winnerIndex = Math.floor(Math.random() * tempWinners.length);
             }
-            winners.push(participants[winnerIndex]);
+            winners.push(tempWinners[winnerIndex]);
         }
     }
   
