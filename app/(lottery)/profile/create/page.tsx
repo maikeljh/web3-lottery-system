@@ -7,7 +7,7 @@ import { ChangeEvent, useEffect, useState } from "react";
 import { makeAzleActor } from "../../../../service/actor";
 import { _SERVICE as AZLE } from "@/config/declarations/dfx_generated/azle.did";
 import { useAuth } from "@/app/use-auth-client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const Page = () => {
   const [profile, setProfile] = useState({
@@ -16,6 +16,7 @@ const Page = () => {
   });
   const router = useRouter();
   const { isAuthenticated, login, principal } = useAuth();
+  const canisterId = useSearchParams().get("canisterId");
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -24,9 +25,9 @@ const Page = () => {
     }
 
     if (localStorage.getItem("profile")) {
-      router.push("/profile");
+      router.push(`/profile?canisterId=${canisterId}`);
     }
-  }, [isAuthenticated, login, router]);
+  }, [isAuthenticated, login, router, canisterId]);
 
   const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -57,7 +58,7 @@ const Page = () => {
       });
       console.log(user);
       if ("Ok" in user) {
-        router.push("/");
+        router.push(`/?canisterId=${canisterId}`);
       } else {
         return;
       }

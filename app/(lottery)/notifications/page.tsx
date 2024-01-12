@@ -3,7 +3,7 @@
 import { Button, Flex, Spacer } from "@chakra-ui/react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import L from "../../public/assets/L.png";
+import L from "../../../public/assets/L.png";
 import Ok from "../../../public/assets/ok.png";
 import { useAuth } from "@/app/use-auth-client";
 import { Principal } from "@dfinity/principal";

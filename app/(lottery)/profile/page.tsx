@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { makeAzleActor } from "../../../service/actor";
 import { _SERVICE as AZLE } from "@/config/declarations/dfx_generated/azle.did";
 import { useAuth } from "@/app/use-auth-client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const Page = () => {
   const [profile, setProfile] = useState({
@@ -17,6 +17,7 @@ const Page = () => {
   const [avatar, setAvatar] = useState<number[] | Uint8Array>();
   const router = useRouter();
   const { principal, logout, isAuthenticated, login } = useAuth();
+  const canisterId = useSearchParams().get("canisterId");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,7 +41,7 @@ const Page = () => {
             })
           );
         } else {
-          router.push("/profile/create");
+          router.push(`/profile/create?canisterId=${canisterId}`);
         }
       } catch (error) {
         console.log(error);
@@ -54,7 +55,7 @@ const Page = () => {
     }
 
     fetchData();
-  }, [isAuthenticated, login, principal, router]);
+  }, [isAuthenticated, login, principal, router, canisterId]);
 
   const handleLogout = () => {
     router.replace("/");
