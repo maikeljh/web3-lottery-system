@@ -1264,7 +1264,7 @@ function selectWinners(prizes: Vec<PrizeDAO>, participants: Vec<Principal>): Vec
 function calculateProbability(member: Principal, totalParticipants: number, priorityRole: int, totalRoles: number): number {
     // Gua butuh: n participants, n roles, 
     const baseProbability = 1/Number(totalParticipants);
-    const adjustedProbability = baseProbability * (1 + (Number(totalRoles) - Number(priorityRole)) * 0.1);
+    const adjustedProbability = baseProbability * (1 + (Number(priorityRole) * baseProbability));
     return adjustedProbability;
 }
 
@@ -1298,7 +1298,9 @@ function selectWinnersGroup(prizes: Vec<PrizeDAO>, participants: Vec<Principal>,
             let probability = calculateProbability(participant.userId, participants.length, participant.rank, roles.length)
             let randomNumber = Math.random()
             if (randomNumber <= probability){
-                tempWinners.push(participants[i])
+                if (!tempWinners.includes(participants[i])){
+                    tempWinners.push(participants[i])
+                }
             }
         }
     }
