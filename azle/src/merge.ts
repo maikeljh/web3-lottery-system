@@ -938,6 +938,106 @@ export default Canister({
         return groups.values()
     }),
 
+    addMember: update([Principal, Principal, Principal], Result(UserRole, Error), (memberID, roleID, groupID) => {
+        try{
+            // Validate ID payload
+            if (!memberID || !roleID || !groupID){
+                return Err({
+                    InvalidPayload: `Payload is not valid!`
+                })
+            }
+            // Validate existance
+            let groupOpt = groups.get(groupID)
+            if ("None" in groupOpt) {
+                return Err({
+                    InvalidId: `Group with that id doesn't exist`
+                })
+            }
+            let userOpt = users.get(memberID);
+            if ("None" in userOpt) {
+                return Err({
+                    InvalidId: `User with that id doesn't exist`
+                })
+            }
+            // ? Perlu validasi role dalam group kah (?)
+            let roleOpt = roles.get(roleID)
+            if ("None" in roleOpt) {
+                return Err({
+                    InvalidId: `Role with that id doesn't exist`
+                })
+            }
+
+            let group = groupOpt.Some
+            let member = userOpt.Some
+            let role = roleOpt.Some
+
+            // Add userRole
+            const userroleID = {
+                userId: memberID,
+                groupId: groupID
+            }
+            const userrole: UserRole = {
+                userId: memberID,
+                groupId: groupID,
+                username: member.name,
+                userRole: role.name,
+            }
+            // Update group
+            group.members.push(memberID);
+
+            // Insertions
+
+            userroles.insert(userroleID, userrole)
+            groups.insert(group.id, group);
+            
+            return Ok(userrole);
+
+
+        } catch (error: any) {
+            return Err({
+                Fail: `Failed to add member ${error}`
+            })
+        }
+    }),
+
+    joinGroup: update([Principal, Principal], Result(GroupDAO, Error), (memberID, groupID) => {
+        try{
+            // Validate ID payload
+            if (!memberID || !groupID){
+                return Err({
+                    InvalidPayload: `Payload is not valid!`
+                })
+            }
+            // Validate existance
+            let groupOpt = groups.get(groupID)
+            if ("None" in groupOpt) {
+                return Err({
+                    InvalidId: `Group with that id doesn't exist`
+                })
+            }
+            let userOpt = users.get(memberID);
+            if ("None" in userOpt) {
+                return Err({
+                    InvalidId: `User with that id doesn't exist`
+                })
+            }
+
+            let group = groupOpt.Some
+            // Update group
+            group.members.push(memberID);
+
+            groups.insert(group.id, group);
+            
+            return Ok(group);
+
+
+        } catch (error: any) {
+            return Err({
+                Fail: `Failed to add member ${error}`
+            })
+        }
+    }),
+
     editMemberRole: update([UserRole], Result(UserRole, Error), (payload) => {
         try {
             if (!payload.groupId || !payload.userId || !payload.userRole || !payload.username) {
@@ -958,10 +1058,11 @@ export default Canister({
                     InvalidId: `Information of user's role doesn't exist`
                 })
             }
-
+            
             let userGroup = userGroupOpt.Some
 
             userGroup.userRole = payload.userRole
+            userroles.insert(dummyUG, userGroup)
 
             return Ok(userGroup);
         } catch (error: any) {
@@ -1065,7 +1166,8 @@ export default Canister({
                 Fail: `Fail to edit group: ${error}`
             })
         }
-    })
+    }),
+
 
 })
 
@@ -1126,6 +1228,40 @@ function selectWinners(prizes: Vec<PrizeDAO>, participants: Vec<Principal>): Vec
     return winners;
 }
 
+function calculateProbability(member: Principal, totalParticipants: nat64, priorityRole: int): float64 {
+    const baseProbability = 1/Number(totalParticipants);
+    const adjustedProbability = baseProbability * (1 - (Number(priorityRole) - 1) * 0.1);
+    return adjustedProbability;
+}
+
+function selectWinnerGroup(prizes: Vec<PrizeDAO>, participants: Vec<Principal>): Vec<Principal> {
+    const winners: Principal[] = []
+  
+    // Shuffle the participants
+    for (let i = participants.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [participants[i], participants[j]] = [participants[j], participants[i]];
+    }
+  
+    for (const prize of prizes) {
+        let winnerIndex = Math.floor(Math.random() * participants.length);
+        const winner = participants[winnerIndex];
+
+        // Check if the winner already won before
+        if (!winners.includes(winner)) {
+            winners.push(winner);
+        } else {
+
+            // If yes, select a different winner
+            while (winners.includes(participants[winnerIndex])) {
+                winnerIndex = Math.floor(Math.random() * participants.length);
+            }
+            winners.push(participants[winnerIndex]);
+        }
+    }
+  
+    return winners;
+}
 // Check completed lottery every minute
 cron.schedule('* * * * *', () => {
     checkCompletedLotteries;
