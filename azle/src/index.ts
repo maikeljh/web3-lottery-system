@@ -171,6 +171,7 @@ const UserRole = Record({
   groupId: Principal,
   username: text,
   userRole: text,
+  rank: int,
 });
 type UserRole = typeof UserRole.tsType;
 
@@ -1034,6 +1035,56 @@ export default Canister({
     return groups.values();
   }),
 
+  joinGroup: update(
+    [Principal, Principal],
+    Result(GroupDAO, Error),
+    (memberID, groupID) => {
+      try {
+        // Validate ID payload
+        if (!memberID || !groupID) {
+          return Err({
+            InvalidPayload: `Payload is not valid!`,
+          });
+        }
+        // Validate existance
+        let groupOpt = groups.get(groupID);
+        if ("None" in groupOpt) {
+          return Err({
+            InvalidId: `Group with that id doesn't exist`,
+          });
+        }
+        let userOpt = users.get(memberID);
+        if ("None" in userOpt) {
+          return Err({
+            InvalidId: `User with that id doesn't exist`,
+          });
+        }
+
+        let group = groupOpt.Some;
+        let user = userOpt.Some;
+        // Update group
+        group.members.push(memberID);
+        // Make default user role (?)
+        const userRole: UserRole = {
+          userId: memberID,
+          groupId: groupID,
+          username: user.name,
+          userRole: "",
+          rank: BigInt(0),
+        };
+        // Insertions
+        groups.insert(group.id, group);
+        userroles.insert({ userId: memberID, groupId: groupID }, userRole);
+
+        return Ok(group);
+      } catch (error: any) {
+        return Err({
+          Fail: `Failed to add member ${error}`,
+        });
+      }
+    }
+  ),
+
   editMemberRole: update([UserRole], Result(UserRole, Error), (payload) => {
     try {
       if (
@@ -1063,6 +1114,7 @@ export default Canister({
       let userGroup = userGroupOpt.Some;
 
       userGroup.userRole = payload.userRole;
+      userroles.insert(dummyUG, userGroup);
 
       return Ok(userGroup);
     } catch (error: any) {
@@ -1104,6 +1156,8 @@ export default Canister({
         group.members.filter(
           (memberId) => memberId.toText() !== userId.toText()
         );
+        // Update removal
+        groups.insert(group.id, group);
 
         return Ok(group);
       } catch (error: any) {
@@ -1159,6 +1213,8 @@ export default Canister({
       group.name = payload.name;
       group.avatar = payload.avatar;
       group.roles = groupRoles;
+      // Update insert
+      groups.insert(group.id, group);
 
       return Ok(group);
     } catch (error: any) {
@@ -1186,9 +1242,29 @@ function checkCompletedLotteries(): void {
     ) {
       // Change to completed
       lottery.isCompleted = true;
-
+      let winners = [];
       // Randomly select winners
-      const winners = selectWinners(lottery.prizes, lottery.participants);
+      if (lottery.types === LotteryType.Group) {
+        const lotteryRolesOpt = roles.get(lottery.id);
+        const groupID = lottery.groupId.Some;
+
+        if ("None" in lotteryRolesOpt || !groupID) {
+          // Invalid group, lottery will be determined as public/private
+          winners = selectWinners(lottery.prizes, lottery.participants);
+        } else {
+          const lotteryRoles = roles.values().filter((role) => {
+            return lottery.groupId.Some === role.groupId;
+          });
+          winners = selectWinnersGroup(
+            lottery.prizes,
+            lottery.participants,
+            lotteryRoles,
+            groupID
+          );
+        }
+      } else {
+        winners = selectWinners(lottery.prizes, lottery.participants);
+      }
 
       winners.forEach((winner) => {
         lottery.winners.push(winner);
@@ -1225,6 +1301,97 @@ function selectWinners(
         winnerIndex = Math.floor(Math.random() * participants.length);
       }
       winners.push(participants[winnerIndex]);
+    }
+  }
+
+  return winners;
+}
+
+function calculateProbability(
+  member: Principal,
+  totalParticipants: number,
+  priorityRole: int,
+  totalRoles: number
+): number {
+  // Gua butuh: n participants, n roles,
+  const baseProbability = 1 / Number(totalParticipants);
+  const adjustedProbability =
+    baseProbability * (1 + Number(priorityRole) * baseProbability);
+  return adjustedProbability;
+}
+
+function selectWinnersGroup(
+  prizes: Vec<PrizeDAO>,
+  participants: Vec<Principal>,
+  roles: Vec<Roles>,
+  groupID: Principal
+): Vec<Principal> {
+  const winners: Principal[] = [];
+  const tempWinners: Principal[] = [];
+
+  // Determine participants probability
+  for (let i = participants.length - 1; i > 0; i--) {
+    let participantOpt = userroles.get({
+      userId: participants[i],
+      groupId: groupID,
+    });
+    let participant = participantOpt.Some;
+    // ini gw bingung handlenya
+    if (!participant) {
+      return winners;
+    }
+    let probability = calculateProbability(
+      participant.userId,
+      participants.length,
+      participant.rank,
+      roles.length
+    );
+    let randomNumber = Math.random();
+    if (randomNumber <= probability) {
+      tempWinners.push(participants[i]);
+    }
+  }
+  // Making sure amount of winners same or more than amount of prizes
+  while (tempWinners.length <= prizes.length) {
+    for (let i = participants.length - 1; i > 0; i--) {
+      let participantOpt = userroles.get({
+        userId: participants[i],
+        groupId: groupID,
+      });
+      let participant = participantOpt.Some;
+      // ini gw bingung handlenya
+      if (!participant) {
+        return winners;
+      }
+      let probability = calculateProbability(
+        participant.userId,
+        participants.length,
+        participant.rank,
+        roles.length
+      );
+      let randomNumber = Math.random();
+      if (randomNumber <= probability) {
+        if (!tempWinners.includes(participants[i])) {
+          tempWinners.push(participants[i]);
+        }
+      }
+    }
+  }
+
+  // Select winners
+  for (const prize of prizes) {
+    let winnerIndex = Math.floor(Math.random() * tempWinners.length);
+    const winner = tempWinners[winnerIndex];
+
+    // Check if the winner already won before
+    if (!winners.includes(winner)) {
+      winners.push(winner);
+    } else {
+      // If yes, select a different winner
+      while (winners.includes(tempWinners[winnerIndex])) {
+        winnerIndex = Math.floor(Math.random() * tempWinners.length);
+      }
+      winners.push(tempWinners[winnerIndex]);
     }
   }
 
