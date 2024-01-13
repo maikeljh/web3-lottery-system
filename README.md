@@ -38,6 +38,15 @@ At Lottereum, we're dedicated to bringing joy and excitement to our community th
    dfx stop
    ```
 
+## Screenshots
+![Screenshot_4499](https://github.com/maikeljh/web3-lottery-system/assets/87570374/92b77520-437e-4599-8e76-d762ec1f64ae)
+
+![Screenshot_4500](https://github.com/maikeljh/web3-lottery-system/assets/87570374/e4f20297-20dd-48b7-b5aa-126db191fbd5)
+
+![Screenshot_4501](https://github.com/maikeljh/web3-lottery-system/assets/87570374/30fff6fe-3009-4aa5-b4ff-25148cd83feb)
+
+![Screenshot_4502](https://github.com/maikeljh/web3-lottery-system/assets/87570374/0cd9b1af-b0e1-434b-b92c-2194b8750658)
+
 ## Author
 ### Team NoLifeTouchGrass
 - Arleen Chrysantha Gunardi
