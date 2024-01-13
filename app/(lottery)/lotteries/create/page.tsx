@@ -3,13 +3,39 @@
 
 import Card from "@/components/common/Card";
 import { Button, Flex } from "@chakra-ui/react";
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import Add from "../../../../public/assets/add.png";
 import Image, { StaticImageData } from "next/image";
 import Link from "next/link";
+import { makeAzleActor } from "@/service/actor";
+import { _SERVICE as AZLE } from "@/config/declarations/dfx_generated/azle.did";
+import { Principal } from "@dfinity/principal";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/app/use-auth-client";
+
+enum LotteryType {
+  Private = "PRIVATE",
+  Public = "PUBLIC",
+  Group = "GROUP",
+}
+
+interface Lottery {
+  title: string;
+  types: string;
+  endedAt: bigint;
+  createdAt: bigint;
+  lotteryBanner: Uint8Array | number[];
+  description: string;
+  groupId: [] | [Principal];
+  prizes: Array<{ name: string; quantity: bigint }>;
+  hostId: Principal;
+}
 
 const Page = () => {
   const [phase, setPhase] = useState("pick");
+  const router = useRouter();
+  const canisterId =
+    useSearchParams().get("canisterId") || localStorage.getItem("canisterId");
   const data = [
     {
       title: "Public Lottery",
@@ -44,25 +70,71 @@ const Page = () => {
 
   const [prize, setPrize] = useState([
     {
-      amount: 1,
-      prize: "",
+      quantity: BigInt(1),
+      name: "",
     },
   ]);
 
   const [imageSrc, setImageSrc] = useState<string | StaticImageData>(Add);
   const [file, setFile] = useState<File>();
+  const defaultGroupId: [Principal] = [Principal.fromText("")];
+  const { principal, isAuthenticated, login } = useAuth();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      login();
+      return;
+    }
+  }, [isAuthenticated, login]);
+
+  const [payload, setPayload] = useState<Lottery>({
+    title: "",
+    types: LotteryType["Public"],
+    endedAt: BigInt(0),
+    createdAt: BigInt(new Date().getTime()),
+    lotteryBanner: new Uint8Array(),
+    description: "",
+    groupId: defaultGroupId,
+    prizes: [],
+    hostId: principal,
+  });
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     setFile(file);
+
     if (file) {
       const reader = new FileReader();
+
+      reader.onload = function (e) {
+        const arrayBuffer = e?.target?.result as ArrayBuffer;
+        const uint8Array = new Uint8Array(arrayBuffer);
+        setPayload({ ...payload, lotteryBanner: uint8Array });
+      };
 
       reader.onloadend = () => {
         setImageSrc(reader.result as string);
       };
 
       reader.readAsDataURL(file);
+    }
+  };
+
+  const createLottery = async () => {
+    try {
+      const azle: AZLE = await makeAzleActor();
+      const lottery = await azle.createLottery({
+        ...payload,
+        createdAt: BigInt(new Date().getTime()),
+        prizes: prize,
+      });
+      if ("Ok" in lottery) {
+        router.replace(`/lotteries/${lottery.Ok.id}?canisterId=${canisterId}`);
+        return;
+      }
+    } catch (error) {
+      console.log(error);
+      return;
     }
   };
 
@@ -81,10 +153,15 @@ const Page = () => {
                     description={card.description}
                     basis={"23%"}
                     onClick={() => {
-                      if (card.title !== "Group Lottery") {
-                        setPhase("default");
-                      } else {
-                        setPhase("group");
+                      if (card.title === "Group Lottery") {
+                        setPhase(LotteryType.Group);
+                        setPayload({ ...payload, types: LotteryType.Group });
+                      } else if (card.title === "Public Lottery") {
+                        setPhase(LotteryType.Public);
+                        setPayload({ ...payload, types: LotteryType.Public });
+                      } else if (card.title === "Private Lottery") {
+                        setPhase(LotteryType.Private);
+                        setPayload({ ...payload, types: LotteryType.Private });
                       }
                     }}
                   />
@@ -110,6 +187,10 @@ const Page = () => {
                 </h1>
                 <input
                   type="text"
+                  value={payload.title}
+                  onChange={(e) =>
+                    setPayload({ ...payload, title: e.target.value })
+                  }
                   required
                   className="border-2 rounded-lg w-full p-2"
                 />
@@ -141,15 +222,30 @@ const Page = () => {
                 <h1 className="text-2xl font-bold min-w-[12rem]">
                   Lottery Description<span className="text-danger">*</span>
                 </h1>
-                <textarea className="w-full min-h-[8rem] border-2 p-2 rounded-lg" />
+                <textarea
+                  className="w-full min-h-[8rem] border-2 p-2 rounded-lg"
+                  value={payload.description}
+                  onChange={(e) =>
+                    setPayload({ ...payload, description: e.target.value })
+                  }
+                />
               </Flex>
-              {phase === "group" ? (
+              {phase === LotteryType.Group ? (
                 <Flex gap={"1rem"} align={"center"}>
                   <Flex direction={"column"} gap={"1rem"} w={"50%"}>
                     <h1 className="text-2xl font-bold min-w-[12rem]">
                       Lottery End Date<span className="text-danger">*</span>
                     </h1>
-                    <input type="date" className="p-2 border-2 rounded-lg" />
+                    <input
+                      type="date"
+                      className="p-2 border-2 rounded-lg"
+                      onChange={(e) =>
+                        setPayload({
+                          ...payload,
+                          endedAt: BigInt(new Date(e.target.value).getTime()),
+                        })
+                      }
+                    />
                   </Flex>
                   <Flex direction={"column"} gap={"1rem"} w={"50%"}>
                     <h1 className="text-2xl font-bold min-w-[12rem]">
@@ -165,7 +261,16 @@ const Page = () => {
                   <h1 className="text-2xl font-bold min-w-[12rem]">
                     Lottery End Date<span className="text-danger">*</span>
                   </h1>
-                  <input type="date" className="p-2 border-2 rounded-lg" />
+                  <input
+                    type="date"
+                    className="p-2 border-2 rounded-lg"
+                    onChange={(e) =>
+                      setPayload({
+                        ...payload,
+                        endedAt: BigInt(new Date(e.target.value).getTime()),
+                      })
+                    }
+                  />
                 </Flex>
               )}
             </Flex>
@@ -174,16 +279,15 @@ const Page = () => {
                 <h1 className="text-2xl font-bold min-w-[12rem]">
                   Lottery Winner Prizes<span className="text-danger">*</span>
                 </h1>
-                <Link href="/lotteries/1" className="ml-auto">
-                  <Button
-                    width={"6rem"}
-                    fontSize={"small"}
-                    className="!bg-primary-1-400"
-                    color={"white"}
-                  >
-                    Save Lottery
-                  </Button>
-                </Link>
+                <Button
+                  width={"6rem"}
+                  fontSize={"small"}
+                  className="!bg-primary-1-400"
+                  color={"white"}
+                  onClick={() => createLottery()}
+                >
+                  Save Lottery
+                </Button>
               </Flex>
               <Flex gap={"1rem"} align={"center"}>
                 <Flex gap={"1rem"} direction={"column"}>
@@ -194,7 +298,7 @@ const Page = () => {
                         type="number"
                         className="w-full border-2 p-2"
                         key={idx}
-                        value={prize.amount}
+                        value={Number(prize.quantity)}
                       />
                     ))}
                 </Flex>
@@ -206,7 +310,7 @@ const Page = () => {
                         type="number"
                         className="w-full border-2 p-2"
                         key={idx}
-                        value={prize.prize}
+                        value={prize.name}
                       />
                     ))}
                 </Flex>
@@ -226,8 +330,8 @@ const Page = () => {
                           setPrize([
                             ...prize,
                             {
-                              amount: 0,
-                              prize: "",
+                              quantity: BigInt(0),
+                              name: "",
                             },
                           ])
                         }

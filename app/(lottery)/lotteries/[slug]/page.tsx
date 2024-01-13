@@ -1,46 +1,202 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { Button, Flex, Spacer } from "@chakra-ui/react";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Thumbnail from "../../../../public/assets/thumbnail.png";
 import Leader from "../../../../public/assets/leader.png";
 import Calendar from "../../../../public/assets/calendar.png";
 import Users from "../../../../public/assets/users.png";
 import Link from "next/link";
+import { makeAzleActor } from "@/service/actor";
+import { _SERVICE as AZLE } from "@/config/declarations/dfx_generated/azle.did";
+import { Principal } from "@dfinity/principal";
+import { useRouter } from "next/router";
+import { useAuth } from "@/app/use-auth-client";
+import { useSearchParams } from "next/navigation";
+
+interface CompletedLottery {
+  id: Principal;
+  title: string;
+  participants: Array<{
+    id: Principal;
+    hostedLotteries: Array<Principal>;
+    name: string;
+    participatedLotteries: Array<Principal>;
+    points: bigint;
+    avatar: Uint8Array | number[];
+  }>;
+  types: string;
+  participantsAmount: bigint;
+  isCompleted: boolean;
+  endedAt: bigint;
+  createdAt: bigint;
+  lotteryBanner: Uint8Array | number[];
+  description: string;
+  prizes: Array<{ id: Principal; name: string; quantity: bigint }>;
+  hostId: Principal;
+  winners: Array<{
+    id: Principal;
+    hostedLotteries: Array<Principal>;
+    name: string;
+    participatedLotteries: Array<Principal>;
+    points: bigint;
+    avatar: Uint8Array | number[];
+  }>;
+}
+
+interface OngoingLottery {
+  id: Principal;
+  title: string;
+  participants: Array<{
+    id: Principal;
+    hostedLotteries: Array<Principal>;
+    name: string;
+    participatedLotteries: Array<Principal>;
+    points: bigint;
+    avatar: Uint8Array | number[];
+  }>;
+  types: string;
+  participantsAmount: bigint;
+  isCompleted: boolean;
+  endedAt: bigint;
+  createdAt: bigint;
+  lotteryBanner: Uint8Array | number[];
+  description: string;
+  groupId: [] | [Principal];
+  prizes: Array<{ id: Principal; name: string; quantity: bigint }>;
+  hostId: Principal;
+}
+
+enum LotteryType {
+  Private = "PRIVATE",
+  Public = "PUBLIC",
+  Group = "GROUP",
+  Completed = "COMPLETED",
+  Joined = "JOINED",
+}
 
 const Page = () => {
-  const [condition, setCondition] = useState("public");
-  const [data, setData] = useState([
-    {
-      username: "username",
-      name: "Sebastian",
-      joined: "2 min ago",
-    },
-    {
-      username: "username",
-      name: "Sebastian",
-      joined: "2 min ago",
-    },
-    {
-      username: "username",
-      name: "Sebastian",
-      joined: "2 min ago",
-    },
-    {
-      username: "username",
-      name: "Sebastian",
-      joined: "2 min ago",
-    },
-    {
-      username: "username",
-      name: "Sebastian",
-      joined: "2 min ago",
-    },
+  const [condition, setCondition] = useState(LotteryType["Public"]);
+  const defaultGroupId: [Principal] = [Principal.fromText("")];
+  const canisterId =
+    useSearchParams().get("canisterId") || localStorage.getItem("canisterId");
+  const [detailLottery, setLottery] = useState<OngoingLottery>({
+    id: Principal.fromText(""),
+    title: "",
+    participants: [],
+    types: "",
+    participantsAmount: BigInt(0),
+    isCompleted: false,
+    endedAt: BigInt(0),
+    createdAt: BigInt(0),
+    lotteryBanner: new Uint8Array(),
+    description: "",
+    groupId: defaultGroupId,
+    prizes: [],
+    hostId: Principal.fromText(""),
+  });
+  const [completedLottery, setCompletedLottery] = useState<CompletedLottery>({
+    id: Principal.fromText(""),
+    title: "",
+    participants: [],
+    types: "",
+    participantsAmount: BigInt(0),
+    isCompleted: false,
+    endedAt: BigInt(0),
+    createdAt: BigInt(0),
+    lotteryBanner: new Uint8Array(),
+    description: "",
+    prizes: [],
+    hostId: Principal.fromText(""),
+    winners: [],
+  });
+  const router = useRouter();
+  const { slug } = router.query;
+  const { principal, isAuthenticated, login } = useAuth();
+
+  useEffect(() => {
+    const fetchDataCompleted = async () => {
+      if (slug) {
+        try {
+          const azle: AZLE = await makeAzleActor();
+          const lottery = await azle.completedLotteryDetail(
+            Principal.fromText(String(slug))
+          );
+          if ("Ok" in lottery) {
+            setCompletedLottery(lottery.Ok);
+          }
+        } catch (error) {
+          console.log(error);
+          return;
+        }
+      }
+    };
+
+    const fetchData = async () => {
+      if (slug) {
+        try {
+          const azle: AZLE = await makeAzleActor();
+          const lottery = await azle.detailLottery(
+            Principal.fromText(String(slug))
+          );
+          if ("Ok" in lottery) {
+            setLottery(lottery.Ok);
+            const isParticipant = detailLottery?.participants.some(
+              (participant) => participant.id === principal
+            );
+            if (isParticipant) {
+              setCondition(LotteryType.Joined);
+            }
+            if (detailLottery?.isCompleted) {
+              setCondition(LotteryType.Completed);
+              await fetchDataCompleted();
+            }
+          }
+        } catch (error) {
+          console.log(error);
+          return;
+        }
+      }
+    };
+
+    if (!isAuthenticated) {
+      login();
+      return;
+    }
+
+    fetchData();
+  }, [
+    detailLottery?.isCompleted,
+    detailLottery?.participants,
+    isAuthenticated,
+    login,
+    principal,
+    slug,
   ]);
+
+  const joinLottery = async () => {
+    try {
+      if (slug) {
+        const azle: AZLE = await makeAzleActor();
+        const join = await azle.joinLottery(
+          Principal.fromText(String(slug)),
+          principal
+        );
+        if ("Ok" in join) {
+          setCondition(LotteryType.Joined);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+  };
+
   return (
     <>
-      {condition === "public" || condition === "joined" ? (
+      {condition === LotteryType.Public || condition === LotteryType.Joined ? (
         <Flex
           rounded={"xl"}
           bg={"white"}
@@ -51,7 +207,13 @@ const Page = () => {
           <Flex direction={"row"} gap={"5rem"}>
             <Flex direction={"column"} gap={"2rem"} w={"60%"}>
               <Flex align="center">
-                <Image src={Thumbnail} alt="thumbnail" className="w-full" />
+                <img
+                  src={`data:image/png;base64,${Buffer.from(
+                    detailLottery.lotteryBanner
+                  ).toString("base64")}`}
+                  alt="thumbnail"
+                  className="w-full"
+                />
               </Flex>
               <Flex align="center" gap={"1rem"}>
                 <h1 className="text-2xl font-bold">Lottery ends in</h1>
@@ -62,53 +224,70 @@ const Page = () => {
                   gap={"0.5rem"}
                 >
                   <Flex direction={"column"}>
-                    <h1 className="text-2xl font-bold text-danger">00</h1>
+                    <h1 className="text-2xl font-bold text-danger">
+                      {Math.ceil(
+                        (new Date(Number(detailLottery.createdAt)).getTime() -
+                          new Date().getTime()) /
+                          (1000 * 60 * 60 * 24)
+                      )}
+                    </h1>
                     <h2 className="text-lg font-bold text-danger">Days</h2>
                   </Flex>
                   <Flex direction={"column"}>
                     <h1 className="text-2xl font-bold text-danger">:</h1>
                   </Flex>
                   <Flex direction={"column"}>
-                    <h1 className="text-2xl font-bold text-danger">20</h1>
+                    <h1 className="text-2xl font-bold text-danger">
+                      {Math.ceil(
+                        ((new Date(Number(detailLottery.createdAt)).getTime() -
+                          new Date().getTime()) %
+                          (1000 * 60 * 60 * 24)) /
+                          (1000 * 60 * 60)
+                      )}
+                    </h1>
                     <h2 className="text-lg font-bold text-danger">Hours</h2>
                   </Flex>
                   <Flex direction={"column"}>
                     <h1 className="text-2xl font-bold text-danger">:</h1>
                   </Flex>
                   <Flex direction={"column"}>
-                    <h1 className="text-2xl font-bold text-danger">17</h1>
+                    <h1 className="text-2xl font-bold text-danger">
+                      {Math.ceil(
+                        ((new Date(Number(detailLottery.createdAt)).getTime() -
+                          new Date().getTime()) %
+                          (1000 * 60 * 60)) /
+                          (1000 * 60)
+                      )}
+                    </h1>
                     <h2 className="text-lg font-bold text-danger">Mins</h2>
                   </Flex>
                   <Flex direction={"column"}>
                     <h1 className="text-2xl font-bold text-danger">:</h1>
                   </Flex>
                   <Flex direction={"column"}>
-                    <h1 className="text-2xl font-bold text-danger">12</h1>
+                    <h1 className="text-2xl font-bold text-danger">
+                      {Math.ceil(
+                        ((new Date(Number(detailLottery.createdAt)).getTime() -
+                          new Date().getTime()) %
+                          (1000 * 60)) /
+                          1000
+                      )}
+                    </h1>
                     <h2 className="text-lg font-bold text-danger">Secs</h2>
                   </Flex>
                 </Flex>
               </Flex>
               <Flex direction={"column"} gap={"1rem"}>
-                <h1 className="text-3xl font-bold">Lottery Name</h1>
+                <h1 className="text-3xl font-bold">{detailLottery.title}</h1>
                 <Flex
                   gap={"1rem"}
                   align={"center"}
                   className="border-t-[1px] border-b-[1px] border-black"
                   padding={"1rem"}
                 >
-                  <Flex
-                    align="center"
-                    className="border-2 border-primary-2-400 rounded-full"
-                  >
-                    <Image
-                      src={Leader}
-                      alt="user"
-                      className="w-[3rem] h-[3rem]"
-                    />
-                  </Flex>
                   <Flex direction={"column"} fontWeight={"semibold"}>
-                    <p>Sebastian</p>
-                    <p>@username</p>
+                    <p>Host</p>
+                    <p>@user-${detailLottery.hostId.toString()}</p>
                   </Flex>
                 </Flex>
                 <Flex align={"center"} gap={"2rem"} fontWeight={"semibold"}>
@@ -116,14 +295,20 @@ const Page = () => {
                     <Image src={Calendar} alt="calendar" className="w-full" />
                   </Flex>
                   <Flex align="center" direction={"column"}>
-                    <p>Created at : 10/12/23</p>
-                    <p>End at : 10/12/23</p>
+                    <p>
+                      Created at :{" "}
+                      {new Date(Number(detailLottery.createdAt)).toString()}
+                    </p>
+                    <p>
+                      End at :{" "}
+                      {new Date(Number(detailLottery.createdAt)).toString()}
+                    </p>
                   </Flex>
                   <Flex align="center">
                     <Image src={Users} alt="users" className="w-full" />
                   </Flex>
                   <Flex align="center" direction={"column"}>
-                    <p>30,000</p>
+                    <p>{Number(detailLottery.participantsAmount)}</p>
                     <p>Participants</p>
                   </Flex>
                 </Flex>
@@ -132,40 +317,18 @@ const Page = () => {
             <Flex direction={"column"} w={"40%"} gap={"2rem"}>
               <Flex direction={"column"} gap={"0.5rem"}>
                 <h1 className="text-2xl font-bold">Lottery Description</h1>
-                <p>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                  do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                  Eros in cursus turpis massa tincidunt dui. Scelerisque in
-                  dictum non consectetur a. Id eu nisl nunc mi ipsum faucibus
-                  vitae aliquet nec. Cras adipiscing enim eu turpis egestas .
-                </p>
+                <p>{detailLottery.description}</p>
               </Flex>
               <Flex direction={"column"} gap={"0.5rem"}>
                 <h1 className="text-2xl font-bold">{"Winner's Prizes"}</h1>
-                <Flex gap={"1rem"} align={"center"}>
-                  <div className="rounded-[50%] bg-primary-2-400 w-12 h-12 flex items-center justify-center text-white text-xl">
-                    1
-                  </div>
-                  <h2 className="text-xl font-bold">100 BTC</h2>
-                </Flex>
-                <Flex gap={"1rem"} align={"center"}>
-                  <div className="rounded-[50%] bg-primary-2-400 w-12 h-12 flex items-center justify-center text-white text-xl">
-                    2
-                  </div>
-                  <h2 className="text-xl font-bold">50 BTC</h2>
-                </Flex>
-                <Flex gap={"1rem"} align={"center"}>
-                  <div className="rounded-[50%] bg-primary-2-400 w-12 h-12 flex items-center justify-center text-white text-xl">
-                    3
-                  </div>
-                  <h2 className="text-xl font-bold">20 BTC</h2>
-                </Flex>
-                <Flex gap={"1rem"} align={"center"}>
-                  <div className="rounded-[50%] bg-primary-2-400 w-12 h-12 flex items-center justify-center text-white text-xl">
-                    4-10
-                  </div>
-                  <h2 className="text-xl font-bold">10 BTC</h2>
-                </Flex>
+                {detailLottery.prizes.map((item, idx) => (
+                  <Flex gap={"1rem"} align={"center"} key={idx}>
+                    <div className="rounded-[50%] bg-primary-2-400 w-12 h-12 flex items-center justify-center text-white text-xl">
+                      {Number(item.quantity)}
+                    </div>
+                    <h2 className="text-xl font-bold">{item.name}</h2>
+                  </Flex>
+                ))}
               </Flex>
             </Flex>
           </Flex>
@@ -174,15 +337,15 @@ const Page = () => {
               <h1 className="text-3xl font-bold">Participants</h1>
               <Spacer />
               <Link
-                href="/lotteries/1/participants"
+                href={`/lotteries/${detailLottery.id}/participants?canisterId=${canisterId}`}
                 className="underline font-semibold"
               >
                 See all
               </Link>
             </Flex>
             <Flex direction={"column"} gap={"1rem"}>
-              {data &&
-                data.map((user, index) => (
+              {detailLottery.participants &&
+                detailLottery.participants.map((user, index) => (
                   <>
                     <Flex
                       bg="white"
@@ -195,25 +358,26 @@ const Page = () => {
                         align="center"
                         className="border-2 border-primary-2-400 rounded-full"
                       >
-                        <Image
-                          src={Leader}
+                        <img
+                          src={`data:image/png;base64,${Buffer.from(
+                            user.avatar
+                          ).toString("base64")}`}
                           alt="user"
                           className="w-[1.75rem]"
                         />
                       </Flex>
                       <Flex direction={"column"} fontWeight={"semibold"}>
                         <p>{user.name}</p>
-                        <p>@{user.username}</p>
+                        <p>@user-{user.id.toString()}</p>
                       </Flex>
                       <Spacer />
-                      <p className="font-semibold">{user.joined}</p>
                     </Flex>
                   </>
                 ))}
             </Flex>
           </Flex>
           <Flex direction={"row"}></Flex>
-          {condition === "public" ? (
+          {condition === LotteryType.Public ? (
             <Button
               width={"8rem"}
               fontSize={"small"}
@@ -221,7 +385,7 @@ const Page = () => {
               color={"white"}
               mx={"auto"}
               fontWeight={"bold"}
-              onClick={() => setCondition("joined")}
+              onClick={() => joinLottery()}
             >
               JOIN LOTTERY
             </Button>
@@ -238,37 +402,42 @@ const Page = () => {
             </Button>
           )}
         </Flex>
-      ) : condition === "completed" ? (
+      ) : condition === LotteryType.Completed ? (
         <>
           <Flex padding={"2rem"} direction={"column"} gap={"3rem"}>
             <Flex direction={"row"} gap={"5rem"}>
               <Flex direction={"column"} gap={"2rem"} w={"60%"}>
                 <Flex align="center">
-                  <Image src={Thumbnail} alt="thumbnail" className="w-full" />
+                  <img
+                    src={`data:image/png;base64,${Buffer.from(
+                      completedLottery.lotteryBanner
+                    ).toString("base64")}`}
+                    alt="thumbnail"
+                    className="w-full"
+                  />
                 </Flex>
                 <Flex align="center" direction={"row"} gap={"1rem"} mx={"auto"}>
                   <Flex align="center">
                     <Image src={Users} alt="users" className="w-full" />
                   </Flex>
                   <Flex align="center" direction={"column"}>
-                    <p className="text-xl font-bold">30,000 Participants</p>
+                    <p className="text-xl font-bold">
+                      {Number(completedLottery.participantsAmount)} Participants
+                    </p>
                   </Flex>
                 </Flex>
                 <Flex direction={"column"} gap={"0.5rem"}>
                   <h1 className="text-2xl font-bold">Description</h1>
                   <p className="p-4 bg-white shadow-xl rounded-lg">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                    do eiusmod tempor incididunt ut labore et dolore magna
-                    aliqua. Eros in cursus turpis massa tincidunt dui.
-                    Scelerisque in dictum non consectetur a. Id eu nisl nunc mi
-                    ipsum faucibus vitae aliquet nec. Cras adipiscing enim eu
-                    turpis egestas .
+                    {completedLottery.description}
                   </p>
                 </Flex>
               </Flex>
               <Flex direction={"column"} w={"40%"} gap={"2rem"}>
                 <Flex direction={"column"} gap={"1rem"}>
-                  <h1 className="text-3xl font-bold">Lottery Name</h1>
+                  <h1 className="text-3xl font-bold">
+                    {completedLottery.title}
+                  </h1>
                   <Flex
                     gap={"1rem"}
                     align={"center"}
@@ -276,19 +445,9 @@ const Page = () => {
                     padding={"1rem"}
                   >
                     <h1 className="text-2xl font-bold">Host</h1>
-                    <Flex
-                      align="center"
-                      className="border-2 border-primary-2-400 rounded-full"
-                    >
-                      <Image
-                        src={Leader}
-                        alt="user"
-                        className="w-[3rem] h-[3rem]"
-                      />
-                    </Flex>
                     <Flex direction={"column"} fontWeight={"semibold"}>
-                      <p>Sebastian</p>
-                      <p>@username</p>
+                      <p>Host</p>
+                      <p>@user-${completedLottery.hostId.toString()}</p>
                     </Flex>
                   </Flex>
                   <Flex align={"center"} gap={"2rem"} fontWeight={"semibold"}>
@@ -296,37 +455,31 @@ const Page = () => {
                       <Image src={Calendar} alt="calendar" className="w-full" />
                     </Flex>
                     <Flex align="center" direction={"column"}>
-                      <p>Created at : 10/12/23</p>
-                      <p>End at : 10/12/23</p>
+                      <p>
+                        Created at :{" "}
+                        {new Date(
+                          Number(completedLottery.createdAt)
+                        ).toString()}
+                      </p>
+                      <p>
+                        End at :{" "}
+                        {new Date(
+                          Number(completedLottery.createdAt)
+                        ).toString()}
+                      </p>
                     </Flex>
                   </Flex>
                 </Flex>
                 <Flex direction={"column"} gap={"0.5rem"}>
                   <h1 className="text-2xl font-bold">{"Winner's Prizes"}</h1>
-                  <Flex gap={"1rem"} align={"center"}>
-                    <div className="rounded-[50%] bg-primary-2-400 w-12 h-12 flex items-center justify-center text-white text-xl">
-                      1
-                    </div>
-                    <h2 className="text-xl font-bold">100 BTC</h2>
-                  </Flex>
-                  <Flex gap={"1rem"} align={"center"}>
-                    <div className="rounded-[50%] bg-primary-2-400 w-12 h-12 flex items-center justify-center text-white text-xl">
-                      2
-                    </div>
-                    <h2 className="text-xl font-bold">50 BTC</h2>
-                  </Flex>
-                  <Flex gap={"1rem"} align={"center"}>
-                    <div className="rounded-[50%] bg-primary-2-400 w-12 h-12 flex items-center justify-center text-white text-xl">
-                      3
-                    </div>
-                    <h2 className="text-xl font-bold">20 BTC</h2>
-                  </Flex>
-                  <Flex gap={"1rem"} align={"center"}>
-                    <div className="rounded-[50%] bg-primary-2-400 w-12 h-12 flex items-center justify-center text-white text-xl">
-                      4-10
-                    </div>
-                    <h2 className="text-xl font-bold">10 BTC</h2>
-                  </Flex>
+                  {completedLottery.prizes.map((item, idx) => (
+                    <Flex gap={"1rem"} align={"center"} key={idx}>
+                      <div className="rounded-[50%] bg-primary-2-400 w-12 h-12 flex items-center justify-center text-white text-xl">
+                        {Number(item.quantity)}
+                      </div>
+                      <h2 className="text-xl font-bold">{item.name}</h2>
+                    </Flex>
+                  ))}
                 </Flex>
               </Flex>
             </Flex>
@@ -335,8 +488,8 @@ const Page = () => {
                 <h1 className="text-3xl font-bold">Winners</h1>
               </Flex>
               <Flex direction={"column"} gap={"1rem"}>
-                {data &&
-                  data.map((user, index) => (
+                {completedLottery.winners &&
+                  completedLottery.winners.map((user, index) => (
                     <>
                       <Flex
                         bg="white"
@@ -349,18 +502,19 @@ const Page = () => {
                           align="center"
                           className="border-2 border-primary-2-400 rounded-full"
                         >
-                          <Image
-                            src={Leader}
+                          <img
+                            src={`data:image/png;base64,${Buffer.from(
+                              user.avatar
+                            ).toString("base64")}`}
                             alt="user"
                             className="w-[1.75rem]"
                           />
                         </Flex>
                         <Flex direction={"column"} fontWeight={"semibold"}>
                           <p>{user.name}</p>
-                          <p>@{user.username}</p>
+                          <p>@user-{user.id.toString()}</p>
                         </Flex>
                         <Spacer />
-                        <p className="font-semibold">Iphone 15</p>
                       </Flex>
                     </>
                   ))}
@@ -371,70 +525,46 @@ const Page = () => {
                 <h1 className="text-3xl font-bold">Participants</h1>
                 <Spacer />
                 <Link
-                  href="/lotteries/1/participants"
+                  href={`/lotteries/${completedLottery.id}/participants?canisterId=${canisterId}`}
                   className="underline font-semibold"
                 >
                   See all
                 </Link>
               </Flex>
               <Flex direction={"column"} gap={"1rem"}>
-                {data &&
-                  data.map((user, index) => (
-                    <>
-                      <Flex
-                        bg="white"
-                        padding={"1rem"}
-                        className="shadow-lg"
-                        gap={"1rem"}
-                        align={"center"}
-                      >
+                {completedLottery.participants &&
+                  completedLottery.participants
+                    .slice(0, 5)
+                    .map((user, index) => (
+                      <>
                         <Flex
-                          align="center"
-                          className="border-2 border-primary-2-400 rounded-full"
+                          bg="white"
+                          padding={"1rem"}
+                          className="shadow-lg"
+                          gap={"1rem"}
+                          align={"center"}
                         >
-                          <Image
-                            src={Leader}
-                            alt="user"
-                            className="w-[1.75rem]"
-                          />
+                          <Flex
+                            align="center"
+                            className="border-2 border-primary-2-400 rounded-full"
+                          >
+                            <img
+                              src={`data:image/png;base64,${Buffer.from(
+                                user.avatar
+                              ).toString("base64")}`}
+                              alt="user"
+                              className="w-[1.75rem]"
+                            />
+                          </Flex>
+                          <Flex direction={"column"} fontWeight={"semibold"}>
+                            <p>{user.name}</p>
+                            <p>@user-{user.id.toString()}</p>
+                          </Flex>
+                          <Spacer />
                         </Flex>
-                        <Flex direction={"column"} fontWeight={"semibold"}>
-                          <p>{user.name}</p>
-                          <p>@{user.username}</p>
-                        </Flex>
-                        <Spacer />
-                        <p className="font-semibold">{user.joined}</p>
-                      </Flex>
-                    </>
-                  ))}
+                      </>
+                    ))}
               </Flex>
-            </Flex>
-          </Flex>
-        </>
-      ) : condition === "notify" ? (
-        <>
-          <Flex direction={"column"} gap={"1rem"}>
-            <h1 className="text-3xl font-bold text-center">@username</h1>
-            <Flex
-              align="center"
-              className="border-3 border-primary-2-400 rounded-full w-full mx-auto"
-              direction={"column"}
-            >
-              <Image
-                src={Leader}
-                alt="leader"
-                className="w-[12rem] h-[12rem]"
-              />
-            </Flex>
-            <h1 className="text-5xl font-bold text-center">CONGRATULATIONS!</h1>
-            <Flex bg={"white"} padding={"1rem"} shadow={"xl"} rounded={"lg"}>
-              <p className="text-2xl font-semibold text-black">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-                eiusmod tempor incididunt ut labore et dolore magna aliqua. Eros
-                in cursus turpis massa tincidunt dui. Scelerisque in dictum non
-                consectetur a. Id eu nisl nunc mi ipsum faucibus vitae aliquet
-                nec. Cras adipiscing enim eu turpis egestas .
-              </p>
             </Flex>
           </Flex>
         </>

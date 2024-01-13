@@ -16,7 +16,8 @@ const Page = () => {
   });
   const router = useRouter();
   const { isAuthenticated, login, principal } = useAuth();
-  const canisterId = useSearchParams().get("canisterId");
+  const canisterId =
+    useSearchParams().get("canisterId") || localStorage.getItem("canisterId");
 
   useEffect(() => {
     if (!isAuthenticated) {

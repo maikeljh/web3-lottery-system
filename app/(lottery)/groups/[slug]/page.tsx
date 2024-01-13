@@ -10,6 +10,7 @@ import Search from "../../../../public/assets/search.png";
 import Banner from "../../../../public/assets/banner.png";
 import { useState } from "react";
 import Card from "@/components/common/Card";
+import { canisterId } from "@/config/declarations/dfx_generated";
 
 const Page = () => {
   const [data, setData] = useState([
@@ -193,7 +194,7 @@ const Page = () => {
                     className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400"
                   />
                 </div>
-                <Link href={"/lotteries/create"}>
+                <Link href={`/lotteries/create?canisterId=${canisterId}`}>
                   <Button
                     width={"8rem"}
                     fontSize={"small"}
@@ -211,9 +212,11 @@ const Page = () => {
               {data2 &&
                 data2.map((lottery) => (
                   <>
-                    <Link href="/lotteries/1" className="grow basis-[23%]">
+                    <Link href={`/lotteries/1`} className="grow basis-[23%]">
                       <Card
-                        image={lottery.image}
+                        image={`data:image/png;base64,${Buffer.from(
+                          ""
+                        ).toString("base64")}`}
                         title={lottery.title}
                         description={lottery.description}
                         basis={"23%"}

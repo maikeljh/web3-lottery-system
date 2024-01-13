@@ -25,7 +25,8 @@ const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [listOfNotifications, setNotifications] = useState<Notification[]>([]);
   const pathname = usePathname();
-  const canisterId = useSearchParams().get("canisterId");
+  const canisterId =
+    useSearchParams().get("canisterId") || localStorage.getItem("canisterId");
 
   const { principal, isAuthenticated, login } = useAuth();
 

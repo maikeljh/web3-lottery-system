@@ -8,6 +8,7 @@ import { _SERVICE as AZLE } from "@/config/declarations/dfx_generated/azle.did";
 import { Principal } from "@dfinity/principal";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/app/use-auth-client";
+import { useSearchParams } from "next/navigation";
 
 interface Lottery {
   id: Principal;
@@ -20,7 +21,8 @@ interface Lottery {
 const Page = () => {
   const [listOfCompleted, setCompleted] = useState<Lottery[]>([]);
   const [listOfOngoing, setOngoing] = useState<Lottery[]>([]);
-
+  const canisterId =
+    useSearchParams().get("canisterId") || localStorage.getItem("canisterId");
   const { principal, isAuthenticated, login } = useAuth();
 
   useEffect(() => {
@@ -67,7 +69,10 @@ const Page = () => {
             {listOfOngoing &&
               listOfOngoing.slice(0, 3).map((lottery) => (
                 <>
-                  <Link href="/lotteries/1" className="grow basis-[23%]">
+                  <Link
+                    href={`/lotteries/${lottery.id.toString()}?canisterId=${canisterId}`}
+                    className="grow basis-[23%]"
+                  >
                     <Card
                       image={`data:image/png;base64,${Buffer.from(
                         lottery.lotteryBanner
@@ -105,7 +110,10 @@ const Page = () => {
             {listOfCompleted &&
               listOfCompleted.slice(0, 3).map((lottery) => (
                 <>
-                  <Link href="/lotteries/1" className="grow basis-[23%]">
+                  <Link
+                    href={`/lotteries/${lottery.id.toString()}?canisterId=${canisterId}`}
+                    className="grow basis-[23%]"
+                  >
                     <Card
                       image={`data:image/png;base64,${Buffer.from(
                         lottery.lotteryBanner

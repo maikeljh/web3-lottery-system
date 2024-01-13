@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/app/use-auth-client";
 import { makeAzleActor } from "@/service/actor";
 import { _SERVICE as AZLE } from "@/config/declarations/dfx_generated/azle.did";
+import { useSearchParams } from "next/navigation";
 
 interface Lottery {
   id: Principal;
@@ -22,7 +23,8 @@ interface Lottery {
 const Page = () => {
   const [listOfLotteries, setLotteries] = useState<Lottery[]>([]);
   const [maxLottery, setMaxLottery] = useState(10);
-
+  const canisterId =
+    useSearchParams().get("canisterId") || localStorage.getItem("canisterId");
   const { principal, isAuthenticated, login } = useAuth();
 
   useEffect(() => {
@@ -76,7 +78,10 @@ const Page = () => {
             {listOfLotteries &&
               listOfLotteries.map((lottery) => (
                 <>
-                  <Link href="/lotteries/1" className="grow basis-[23%]">
+                  <Link
+                    href={`/lotteries/${lottery.id.toString()}?canisterId=${canisterId}`}
+                    className="grow basis-[23%]"
+                  >
                     <Card
                       image={`data:image/png;base64,${Buffer.from(
                         lottery.lotteryBanner

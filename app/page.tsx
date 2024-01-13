@@ -14,7 +14,12 @@ import Link from "next/link";
 export default function Home() {
   const { isAuthenticated, login } = useAuth();
   const router = useRouter();
-  const canisterId = useSearchParams().get("canisterId");
+  const canisterId =
+    useSearchParams().get("canisterId") || localStorage.getItem("canisterId");
+
+  if (canisterId) {
+    localStorage.setItem("canisterId", canisterId);
+  }
 
   useEffect(() => {
     if (!isAuthenticated) {

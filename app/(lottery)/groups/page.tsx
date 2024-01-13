@@ -108,7 +108,9 @@ const Page = () => {
                 <>
                   <Link href="/groups/1" className="grow basis-[23%]">
                     <Card
-                      image={lottery.image}
+                      image={`data:image/png;base64,${Buffer.from("").toString(
+                        "base64"
+                      )}`}
                       title={lottery.title}
                       description={lottery.description}
                       basis={"23%"}

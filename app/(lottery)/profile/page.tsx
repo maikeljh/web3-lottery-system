@@ -17,7 +17,8 @@ const Page = () => {
   const [avatar, setAvatar] = useState<number[] | Uint8Array>();
   const router = useRouter();
   const { principal, logout, isAuthenticated, login } = useAuth();
-  const canisterId = useSearchParams().get("canisterId");
+  const canisterId =
+    useSearchParams().get("canisterId") || localStorage.getItem("canisterId");
 
   useEffect(() => {
     const fetchData = async () => {
