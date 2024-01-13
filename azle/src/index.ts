@@ -608,13 +608,20 @@ export default Canister({
     Result(Vec(LotteryPreviewPayload), Error),
     () => {
       try {
-        const publicLotteries = lotteries.values().filter((lottery) => {
-          return (
-            lottery.types === LotteryType.Public &&
-            lottery.isCompleted === false
-          );
-        });
+        // const publicLotteries = lotteries.values().filter((lottery) => {
+        //   return (
+        //     lottery.types === LotteryType.Public &&
+        //     lottery.isCompleted === false
+        //   );
+        // });
 
+
+        let publicLotteries: LotteryDAO[] = []
+        lotteries.values().forEach((lottery) => {
+          if (lottery.types === LotteryType.Public && !lottery.isCompleted){
+            publicLotteries = [...publicLotteries, lottery]
+          }
+        })
         const previewPublicLotteries: LotteryPreviewPayload[] = [];
 
         publicLotteries.forEach((lottery) => {
@@ -655,9 +662,16 @@ export default Canister({
           });
         }
 
-        const hostedOngoingLotteries = lotteries.values().filter((lottery) => {
-          return lottery.hostId === userId && lottery.isCompleted === false;
-        });
+        // const hostedOngoingLotteries = lotteries.values().filter((lottery) => {
+        //   return lottery.hostId === userId && lottery.isCompleted === false;
+        // });
+
+        let hostedOngoingLotteries: LotteryDAO[] = []
+        lotteries.values().forEach((lottery) => {
+          if (lottery.hostId.toString() === userId.toString() && !lottery.isCompleted){
+            hostedOngoingLotteries = [...hostedOngoingLotteries, lottery]
+          }
+        })
 
         const previewHostedOngoingLotteries: LotteryPreviewPayload[] = [];
 
@@ -698,11 +712,19 @@ export default Canister({
             InvalidId: `User with that id doesn't exist`,
           });
         }
-        const hostedCompletedLotteries = lotteries
-          .values()
-          .filter((lottery) => {
-            return lottery.hostId === userId && lottery.isCompleted === true;
-          });
+
+        // const hostedCompletedLotteries = lotteries
+        //   .values()
+        //   .filter((lottery) => {
+        //     return lottery.hostId === userId && lottery.isCompleted === true;
+        //   });
+
+        let hostedCompletedLotteries: LotteryDAO[] = []
+        lotteries.values().forEach((lottery) => {
+          if (lottery.hostId.toString() === userId.toString() && lottery.isCompleted){
+            hostedCompletedLotteries = [...hostedCompletedLotteries, lottery];
+          }
+        })
 
         const previewHostedCompletedLotteries: LotteryPreviewPayload[] = [];
 
@@ -744,15 +766,23 @@ export default Canister({
           });
         }
 
-        const participatedOngoingLotteries = lotteries
-          .values()
-          .filter((lottery) => {
-            return (
-              lottery.participants.includes(userId) &&
-              lottery.hostId !== userId &&
-              lottery.isCompleted === false
-            );
-          });
+        // const participatedOngoingLotteries = lotteries
+        //   .values()
+        //   .filter((lottery) => {
+        //     return (
+        //       lottery.participants.includes(userId) &&
+        //       lottery.hostId !== userId &&
+        //       lottery.isCompleted === false
+        //     );
+        //   });
+          
+        let participatedOngoingLotteries: LotteryDAO[] = [];
+        lotteries.values().forEach((lottery) => {
+          if (lottery.participants.includes(userId) && lottery.hostId !== userId && !lottery.isCompleted){
+            participatedOngoingLotteries = [...participatedOngoingLotteries, lottery];
+          }
+        })
+
 
         const previewParticipatedOngoingLotteries: LotteryPreviewPayload[] = [];
 
@@ -794,15 +824,21 @@ export default Canister({
           });
         }
 
-        const participatedCompletedLotteries = lotteries
-          .values()
-          .filter((lottery) => {
-            return (
-              lottery.participants.includes(userId) &&
-              lottery.hostId !== userId &&
-              lottery.isCompleted === true
-            );
-          });
+        // const participatedCompletedLotteries = lotteries
+        //   .values()
+        //   .filter((lottery) => {
+        //     return (
+        //       lottery.participants.includes(userId) &&
+        //       lottery.hostId !== userId &&
+        //       lottery.isCompleted === true
+        //     );
+        //   });
+        let participatedCompletedLotteries: LotteryDAO[] = [];
+        lotteries.values().forEach((lottery) =>{
+          if (lottery.participants.includes(userId) && lottery.hostId.toString() !== userId.toString() && lottery.isCompleted){
+            participatedCompletedLotteries = [...participatedCompletedLotteries, lottery];
+          }
+        })
 
         const previewParticipatedCompletedLotteries: LotteryPreviewPayload[] =
           [];
@@ -846,14 +882,23 @@ export default Canister({
           });
         }
 
-        const userNotifications = notifications
-          .values()
-          .filter((notification) => {
-            return (
-              notification["ownerId"] === userId &&
-              notification["isRead"] === false
-            );
-          });
+        // const userNotifications = notifications
+        //   .values()
+        //   .filter((notification) => {
+        //     return (
+        //       notification["ownerId"] === userId &&
+        //       notification["isRead"] === false
+        //     );
+        //   });
+        let userNotifications: NotificationDAO[] = [];
+        notifications.values().forEach((notification) => {
+          if (notification.ownerId.toString() === userId.toString() &&
+              notification.isRead === false) {
+                userNotifications = [...userNotifications, notification];
+          }
+        })
+
+
 
         const previewUserNotifications: NotificationPayload[] = [];
 
@@ -1295,9 +1340,16 @@ function checkCompletedLotteries(): void {
           // Invalid group, lottery will be determined as public/private
           winners = selectWinners(lottery.prizes, lottery.participants);
         } else {
-          const lotteryRoles = roles.values().filter((role) => {
-            return lottery.groupId.Some === role.groupId;
-          });
+          // const lotteryRoles = roles.values().filter((role) => {
+          //   return lottery.groupId.Some === role.groupId;
+          // });
+
+          let lotteryRoles: Roles[] = []
+          roles.values().forEach((role) => {
+            if (lottery.groupId.Some === role.groupId){
+              lotteryRoles = [...lotteryRoles, role];
+            }
+          })
           winners = selectWinnersGroup(
             lottery.prizes,
             lottery.participants,
