@@ -138,13 +138,13 @@ const Page = () => {
           );
           if ("Ok" in lottery) {
             setLottery(lottery.Ok);
-            const isParticipant = detailLottery?.participants.some(
-              (participant) => participant.id === principal
+            const isParticipant = lottery.Ok.participants.some(
+              (participant) => participant.id.toString() == principal.toString()
             );
             if (isParticipant) {
               setCondition(LotteryType.Joined);
             }
-            if (detailLottery?.isCompleted) {
+            if (lottery.Ok.isCompleted) {
               setCondition(LotteryType.Completed);
               await fetchDataCompleted();
             }
@@ -393,7 +393,7 @@ const Page = () => {
             </Flex>
           </Flex>
           <Flex direction={"row"}></Flex>
-          {detailLottery.hostId !== principal &&
+          {detailLottery.hostId.toString() !== principal.toString() &&
           (condition === LotteryType.Public ||
             condition === LotteryType.Private) ? (
             <Button
@@ -415,6 +415,7 @@ const Page = () => {
               color={"white"}
               mx={"auto"}
               fontWeight={"bold"}
+              disabled
             >
               ALREADY JOINED
             </Button>
