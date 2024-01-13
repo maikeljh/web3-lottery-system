@@ -1,9 +1,7 @@
-# Azle + NextJS Template
+# Lottereum
+At Lottereum, we're dedicated to bringing joy and excitement to our community through thrilling giveaways. Whether you're a seasoned participant or new to the world of giveaways, you're in for a treat!
 
-![Image](public/image.png)
-
-### Prerequisites
-
+## Prerequisites
 - dfx > 0.15.1
 - Nodejs > 18.16.0
 - jq (Command line based JSON processor).
@@ -13,8 +11,7 @@
     sudo apt update && sudo apt install -y jq
     ```
 
-- Follwing are the steps to deploy your application locally
-
+## How to Run
 1. Install dependencies:
 
     ```bash
@@ -31,8 +28,20 @@
    yarn deploy
    ```
 
+   ```bash
+   yarn dev
+   ```
+
 - To Stop Replica run:
 
    ```bash
    dfx stop
    ```
+
+## Author
+### Team NoLifeTouchGrass
+- Arleen Chrysantha Gunardi
+- Kenneth Dave Bahana
+- Marcel Ryan Antony
+- Michael Jonathan Halim
+- Raynard Tanadi
