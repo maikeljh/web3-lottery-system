@@ -1031,7 +1031,7 @@ export default Canister({
     }
   ),
 
-  listGroups: query([], Vec(GroupPayload), () => {
+  listGroups: query([], Vec(GroupDAO), () => {
     return groups.values();
   }),
 
@@ -1084,6 +1084,38 @@ export default Canister({
       }
     }
   ),
+
+  getGroupsByOwnerId: query([Principal], Result(Vec(GroupDAO), Error), (ownerId) => {
+    try {
+        if (!ownerId) {
+            return Err({
+                InvalidPayload: `Payload is not valid!`
+            })
+        }
+
+        const userOpt = users.get(ownerId);
+
+        if ("None" in userOpt) {
+            return Err({
+                InvalidId: `User with that id doesn't exist!`
+            })
+        }
+
+        let ownerGroups: GroupDAO[] = []
+
+        groups.values().forEach((group) => {
+          if (group.ownerId.toString() === ownerId.toString()) {
+            ownerGroups = [...ownerGroups, group]
+          }
+        })
+
+        return Ok(ownerGroups);
+    } catch (error: any) {
+      return Err({
+        Fail: `Failed to get the owner groups`
+      })
+    }
+}),
 
   editMemberRole: update([UserRole], Result(UserRole, Error), (payload) => {
     try {
