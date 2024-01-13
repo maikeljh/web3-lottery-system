@@ -605,13 +605,6 @@ export default Canister({
     Result(Vec(LotteryPreviewPayload), Error),
     () => {
       try {
-        // const publicLotteries = lotteries.values().filter((lottery) => {
-        //   return (
-        //     lottery.types === LotteryType.Public &&
-        //     lottery.isCompleted === false
-        //   );
-        // });
-
         let publicLotteries: LotteryDAO[] = [];
         lotteries.values().forEach((lottery) => {
           if (lottery.types === LotteryType.Public && !lottery.isCompleted) {
@@ -657,10 +650,6 @@ export default Canister({
             InvalidId: `User with that id doesn't exist`,
           });
         }
-
-        // const hostedOngoingLotteries = lotteries.values().filter((lottery) => {
-        //   return lottery.hostId === userId && lottery.isCompleted === false;
-        // });
 
         let hostedOngoingLotteries: LotteryDAO[] = [];
         lotteries.values().forEach((lottery) => {
@@ -712,12 +701,6 @@ export default Canister({
           });
         }
 
-        // const hostedCompletedLotteries = lotteries
-        //   .values()
-        //   .filter((lottery) => {
-        //     return lottery.hostId === userId && lottery.isCompleted === true;
-        //   });
-
         let hostedCompletedLotteries: LotteryDAO[] = [];
         lotteries.values().forEach((lottery) => {
           if (
@@ -768,21 +751,13 @@ export default Canister({
           });
         }
 
-        // const participatedOngoingLotteries = lotteries
-        //   .values()
-        //   .filter((lottery) => {
-        //     return (
-        //       lottery.participants.includes(userId) &&
-        //       lottery.hostId !== userId &&
-        //       lottery.isCompleted === false
-        //     );
-        //   });
-
         let participatedOngoingLotteries: LotteryDAO[] = [];
         lotteries.values().forEach((lottery) => {
           if (
-            lottery.participants.includes(userId) &&
-            lottery.hostId !== userId &&
+            lottery.participants.some(
+              (participant) => participant.toString() === userId.toString()
+            ) &&
+            lottery.hostId.toString() !== userId.toString() &&
             !lottery.isCompleted
           ) {
             participatedOngoingLotteries = [
@@ -832,19 +807,12 @@ export default Canister({
           });
         }
 
-        // const participatedCompletedLotteries = lotteries
-        //   .values()
-        //   .filter((lottery) => {
-        //     return (
-        //       lottery.participants.includes(userId) &&
-        //       lottery.hostId !== userId &&
-        //       lottery.isCompleted === true
-        //     );
-        //   });
         let participatedCompletedLotteries: LotteryDAO[] = [];
         lotteries.values().forEach((lottery) => {
           if (
-            lottery.participants.includes(userId) &&
+            lottery.participants.some(
+              (participant) => participant.toString() === userId.toString()
+            ) &&
             lottery.hostId.toString() !== userId.toString() &&
             lottery.isCompleted
           ) {
@@ -897,14 +865,6 @@ export default Canister({
           });
         }
 
-        // const userNotifications = notifications
-        //   .values()
-        //   .filter((notification) => {
-        //     return (
-        //       notification["ownerId"] === userId &&
-        //       notification["isRead"] === false
-        //     );
-        //   });
         let userNotifications: NotificationDAO[] = [];
         notifications.values().forEach((notification) => {
           if (
@@ -1355,10 +1315,6 @@ function checkCompletedLotteries(): void {
           // Invalid group, lottery will be determined as public/private
           winners = selectWinners(lottery.prizes, lottery.participants);
         } else {
-          // const lotteryRoles = roles.values().filter((role) => {
-          //   return lottery.groupId.Some === role.groupId;
-          // });
-
           let lotteryRoles: Roles[] = [];
           roles.values().forEach((role) => {
             if (lottery.groupId.Some === role.groupId) {
@@ -1423,7 +1379,6 @@ function calculateProbability(
   priorityRole: int,
   totalRoles: number
 ): number {
-  // Gua butuh: n participants, n roles,
   const baseProbability = 1 / Number(totalParticipants);
   const adjustedProbability =
     baseProbability * (1 + Number(priorityRole) * baseProbability);
@@ -1446,7 +1401,7 @@ function selectWinnersGroup(
       groupId: groupID,
     });
     let participant = participantOpt.Some;
-    // ini gw bingung handlenya
+
     if (!participant) {
       return winners;
     }
@@ -1469,7 +1424,6 @@ function selectWinnersGroup(
         groupId: groupID,
       });
       let participant = participantOpt.Some;
-      // ini gw bingung handlenya
       if (!participant) {
         return winners;
       }

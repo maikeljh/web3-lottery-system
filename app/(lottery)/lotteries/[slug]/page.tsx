@@ -393,7 +393,7 @@ const Page = () => {
             </Flex>
           </Flex>
           <Flex direction={"row"}></Flex>
-          {detailLottery.hostId.toString() !== principal.toString() &&
+          {detailLottery?.hostId?.toString() !== principal?.toString() &&
           (condition === LotteryType.Public ||
             condition === LotteryType.Private) ? (
             <Button
