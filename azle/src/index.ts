@@ -315,8 +315,8 @@ export default Canister({
         }
         // Validate host existance (user)
         const hostOpt = users.get(payload.hostId);
-        if ("None" in hostOpt){
-          return Err({ InvalidId: `User with that ID doesn't exist`})
+        if ("None" in hostOpt) {
+          return Err({ InvalidId: `User with that ID doesn't exist` });
         }
         // Validating lottery type
         if (
@@ -396,12 +396,12 @@ export default Canister({
         }
         // Adding lottery to user hosted lotteries
         const host = hostOpt.Some;
-        host.hostedLotteries.push(lotteryId)
+        host.hostedLotteries.push(lotteryId);
 
         // Insertions
         lotteries.insert(lottery.id, lottery);
         users.insert(host.id, host);
-    
+
         return Ok(lottery);
       } catch (error: any) {
         return Err({ Fail: `Failed to add lottery: ${error}` });
@@ -1095,37 +1095,41 @@ export default Canister({
     }
   ),
 
-  getGroupsByOwnerId: query([Principal], Result(Vec(GroupDAO), Error), (ownerId) => {
-    try {
+  getGroupsByOwnerId: query(
+    [Principal],
+    Result(Vec(GroupDAO), Error),
+    (ownerId) => {
+      try {
         if (!ownerId) {
-            return Err({
-                InvalidPayload: `Payload is not valid!`
-            })
+          return Err({
+            InvalidPayload: `Payload is not valid!`,
+          });
         }
 
         const userOpt = users.get(ownerId);
 
         if ("None" in userOpt) {
-            return Err({
-                InvalidId: `User with that id doesn't exist!`
-            })
+          return Err({
+            InvalidId: `User with that id doesn't exist!`,
+          });
         }
 
-        let ownerGroups: GroupDAO[] = []
+        let ownerGroups: GroupDAO[] = [];
 
         groups.values().forEach((group) => {
           if (group.ownerId.toString() === ownerId.toString()) {
-            ownerGroups = [...ownerGroups, group]
+            ownerGroups = [...ownerGroups, group];
           }
-        })
+        });
 
         return Ok(ownerGroups);
-    } catch (error: any) {
-      return Err({
-        Fail: `Failed to get the owner groups`
-      })
+      } catch (error: any) {
+        return Err({
+          Fail: `Failed to get the owner groups`,
+        });
+      }
     }
-}),
+  ),
 
   editMemberRole: update([UserRole], Result(UserRole, Error), (payload) => {
     try {
@@ -1278,10 +1282,7 @@ function generateId(): Principal {
 function checkCompletedLotteries(): void {
   // Noted
   for (const lottery of lotteries.values()) {
-    if (
-      lottery.endedAt <= BigInt(Math.floor(performance.now())) * 1000000n &&
-      !lottery.isCompleted
-    ) {
+    if (lottery.endedAt <= ic.time() && !lottery.isCompleted) {
       // Change to completed
       lottery.isCompleted = true;
       let winners = [];
