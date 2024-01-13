@@ -128,6 +128,7 @@ const Page = () => {
         ...payload,
         createdAt: BigInt(new Date().getTime()),
         prizes: prize,
+        hostId: principal,
       });
       if ("Ok" in lottery) {
         router.replace(`/lotteries/${lottery.Ok.id}?canisterId=${canisterId}`);
@@ -293,24 +294,34 @@ const Page = () => {
                 <Flex gap={"1rem"} direction={"column"}>
                   <h1 className="text-2xl font-bold min-w-[12rem]">Amount</h1>
                   {prize &&
-                    prize.map((prize, idx) => (
+                    prize.map((el, idx) => (
                       <input
                         type="number"
                         className="w-full border-2 p-2"
                         key={idx}
-                        value={Number(prize.quantity)}
+                        value={Number(el.quantity)}
+                        onChange={(e) => {
+                          let tempPrize = [...prize];
+                          tempPrize[idx].quantity = BigInt(e.target.value);
+                          setPrize(tempPrize);
+                        }}
                       />
                     ))}
                 </Flex>
                 <Flex gap={"1rem"} direction={"column"} className="w-full">
                   <h1 className="text-2xl font-bold min-w-[12rem]">Prize</h1>
                   {prize &&
-                    prize.map((prize, idx) => (
+                    prize.map((el, idx) => (
                       <input
                         type="number"
                         className="w-full border-2 p-2"
                         key={idx}
-                        value={prize.name}
+                        value={el.name}
+                        onChange={(e) => {
+                          let tempPrize = [...prize];
+                          tempPrize[idx].name = e.target.value;
+                          setPrize(tempPrize);
+                        }}
                       />
                     ))}
                 </Flex>

@@ -41,14 +41,14 @@ const Page = () => {
         console.log(error);
         return;
       }
-
-      if (!isAuthenticated) {
-        login();
-        return;
-      }
-
-      fetchData();
     };
+
+    if (!isAuthenticated) {
+      login();
+      return;
+    }
+
+    fetchData();
   }, [isAuthenticated, login, principal]);
 
   return (

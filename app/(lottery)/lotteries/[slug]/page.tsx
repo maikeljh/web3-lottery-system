@@ -4,17 +4,14 @@
 import { Button, Flex, Spacer } from "@chakra-ui/react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import Thumbnail from "../../../../public/assets/thumbnail.png";
-import Leader from "../../../../public/assets/leader.png";
 import Calendar from "../../../../public/assets/calendar.png";
 import Users from "../../../../public/assets/users.png";
 import Link from "next/link";
 import { makeAzleActor } from "@/service/actor";
 import { _SERVICE as AZLE } from "@/config/declarations/dfx_generated/azle.did";
 import { Principal } from "@dfinity/principal";
-import { useRouter } from "next/router";
 import { useAuth } from "@/app/use-auth-client";
-import { useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 
 interface CompletedLottery {
   id: Principal;
@@ -82,8 +79,10 @@ const Page = () => {
   const defaultGroupId: [] = [];
   const canisterId =
     useSearchParams().get("canisterId") || localStorage.getItem("canisterId");
+  const { slug } = useParams();
+  const { principal, isAuthenticated, login } = useAuth();
   const [detailLottery, setLottery] = useState<OngoingLottery>({
-    id: Principal.fromText(""),
+    id: principal,
     title: "",
     participants: [],
     types: "",
@@ -95,10 +94,10 @@ const Page = () => {
     description: "",
     groupId: defaultGroupId,
     prizes: [],
-    hostId: Principal.fromText(""),
+    hostId: principal,
   });
   const [completedLottery, setCompletedLottery] = useState<CompletedLottery>({
-    id: Principal.fromText(""),
+    id: principal,
     title: "",
     participants: [],
     types: "",
@@ -109,12 +108,9 @@ const Page = () => {
     lotteryBanner: new Uint8Array(),
     description: "",
     prizes: [],
-    hostId: Principal.fromText(""),
+    hostId: principal,
     winners: [],
   });
-  const router = useRouter();
-  const { slug } = router.query;
-  const { principal, isAuthenticated, login } = useAuth();
 
   useEffect(() => {
     const fetchDataCompleted = async () => {
@@ -141,6 +137,8 @@ const Page = () => {
           const lottery = await azle.detailLottery(
             Principal.fromText(String(slug))
           );
+          console.log(String(slug));
+          console.log(lottery);
           if ("Ok" in lottery) {
             setLottery(lottery.Ok);
             const isParticipant = detailLottery?.participants.some(
@@ -289,7 +287,7 @@ const Page = () => {
                 >
                   <Flex direction={"column"} fontWeight={"semibold"}>
                     <p>Host</p>
-                    <p>@user-${detailLottery.hostId.toString()}</p>
+                    <p>@user-${detailLottery?.hostId?.toString() || ""}</p>
                   </Flex>
                 </Flex>
                 <Flex align={"center"} gap={"2rem"} fontWeight={"semibold"}>
@@ -450,7 +448,7 @@ const Page = () => {
                     <h1 className="text-2xl font-bold">Host</h1>
                     <Flex direction={"column"} fontWeight={"semibold"}>
                       <p>Host</p>
-                      <p>@user-${completedLottery.hostId.toString()}</p>
+                      <p>@user-${completedLottery.hostId.toString() || ""}</p>
                     </Flex>
                   </Flex>
                   <Flex align={"center"} gap={"2rem"} fontWeight={"semibold"}>
