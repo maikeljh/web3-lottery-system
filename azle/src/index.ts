@@ -313,7 +313,11 @@ export default Canister({
         ) {
           return Err({ InvalidPayload: `Payload is not valid!` });
         }
-
+        // Validate host existance (user)
+        const hostOpt = users.get(payload.hostId);
+        if ("None" in hostOpt){
+          return Err({ InvalidId: `User with that ID doesn't exist`})
+        }
         // Validating lottery type
         if (
           !(
@@ -390,8 +394,14 @@ export default Canister({
           group.groupLotteries.push(lottery.id);
           groups.insert(id, group);
         }
+        // Adding lottery to user hosted lotteries
+        const host = hostOpt.Some;
+        host.hostedLotteries.push(lotteryId)
 
+        // Insertions
         lotteries.insert(lottery.id, lottery);
+        users.insert(host.id, host);
+    
         return Ok(lottery);
       } catch (error: any) {
         return Err({ Fail: `Failed to add lottery: ${error}` });
