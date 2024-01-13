@@ -31,7 +31,6 @@ const Page = () => {
           setNotifications(notifications.Ok);
         }
       } catch (error) {
-        console.log(error);
         return;
       }
     };
@@ -57,14 +56,12 @@ const Page = () => {
             setNotifications(notifications.Ok);
           }
         } catch (error) {
-          console.log(error);
           return;
         }
       };
 
       if (isAuthenticated) fetchData();
     } catch (error) {
-      console.log(error);
       return;
     }
   };
@@ -108,6 +105,13 @@ const Page = () => {
               </>
             ))}
         </Flex>
+        {listOfNotifications.length === 0 ? (
+          <h1 className="text-3xl mx-auto text-center mt-12 font-semibold">
+            No notifications available yet.
+          </h1>
+        ) : (
+          <></>
+        )}
         {maxNotif < listOfNotifications.length ? (
           <Flex align={"center"} padding={"1rem"} width={"full"}>
             <Button

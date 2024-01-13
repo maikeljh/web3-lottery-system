@@ -7,6 +7,7 @@ import { makeAzleActor } from "@/service/actor";
 import { _SERVICE as AZLE } from "@/config/declarations/dfx_generated/azle.did";
 import { Principal } from "@dfinity/principal";
 import { useRouter } from "next/router";
+import { useParams } from "next/navigation";
 
 interface Participants {
   id: Principal;
@@ -20,8 +21,7 @@ interface Participants {
 const Page = () => {
   const [listOfParticipants, setParticipants] = useState<Participants[]>([]);
   const [max, setMax] = useState(10);
-  const router = useRouter();
-  const { slug } = router.query;
+  const { slug } = useParams();
   const { principal, isAuthenticated, login } = useAuth();
 
   useEffect(() => {
@@ -36,7 +36,6 @@ const Page = () => {
             setParticipants(participants.Ok.participants);
           }
         } catch (error) {
-          console.log(error);
           return;
         }
       }
@@ -91,6 +90,13 @@ const Page = () => {
               </>
             ))}
         </Flex>
+        {listOfParticipants.length === 0 ? (
+          <h1 className="text-3xl mx-auto text-center mt-12 font-semibold">
+            No participants available yet.
+          </h1>
+        ) : (
+          <></>
+        )}
         {max < listOfParticipants.length ? (
           <Flex align={"center"} padding={"1rem"} width={"full"} mt={"1rem"}>
             <Button

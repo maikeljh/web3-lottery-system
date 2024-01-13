@@ -39,7 +39,6 @@ const Navbar = () => {
           setNotifications(notifications.Ok);
         }
       } catch (error) {
-        console.log(error);
         return;
       }
     };
@@ -60,14 +59,12 @@ const Navbar = () => {
             setNotifications(notifications.Ok);
           }
         } catch (error) {
-          console.log(error);
           return;
         }
       };
 
       if (isAuthenticated) fetchData();
     } catch (error) {
-      console.log(error);
       return;
     }
   };
@@ -227,6 +224,13 @@ const Navbar = () => {
                         </Flex>
                       </Flex>
                     ))}
+                  {listOfNotifications.length === 0 ? (
+                    <h1 className="mt-4 mx-auto text-center font-semibold">
+                      No notifications available yet.
+                    </h1>
+                  ) : (
+                    <></>
+                  )}
                   <Flex padding={"1rem"}>
                     <Link
                       className="mx-auto text-[#3E98EB]"

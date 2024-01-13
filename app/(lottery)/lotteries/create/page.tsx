@@ -107,17 +107,24 @@ const Page = () => {
     if (file) {
       const reader = new FileReader();
 
-      reader.onload = function (e) {
-        const arrayBuffer = e?.target?.result as ArrayBuffer;
-        const uint8Array = new Uint8Array(arrayBuffer);
-        setPayload({ ...payload, lotteryBanner: uint8Array });
-      };
-
-      reader.onloadend = () => {
+      reader.onloadend = (e: ProgressEvent<FileReader>) => {
         setImageSrc(reader.result as string);
       };
 
       reader.readAsDataURL(file);
+    }
+
+    if (file) {
+      const reader = new FileReader();
+
+      reader.onloadend = (e: ProgressEvent<FileReader>) => {
+        if (e.target?.result instanceof ArrayBuffer) {
+          const uint8Array = new Uint8Array(e.target.result);
+          setPayload({ ...payload, lotteryBanner: uint8Array });
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
     }
   };
 
@@ -135,7 +142,6 @@ const Page = () => {
         return;
       }
     } catch (error) {
-      console.log(error);
       return;
     }
   };
@@ -313,7 +319,7 @@ const Page = () => {
                   {prize &&
                     prize.map((el, idx) => (
                       <input
-                        type="number"
+                        type="text"
                         className="w-full border-2 p-2"
                         key={idx}
                         value={el.name}

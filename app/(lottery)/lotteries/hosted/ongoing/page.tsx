@@ -37,7 +37,6 @@ const Page = () => {
           setLotteries(lotteries.Ok);
         }
       } catch (error) {
-        console.log(error);
         return;
       }
     };
@@ -80,7 +79,7 @@ const Page = () => {
                 <>
                   <Link
                     href={`/lotteries/${lottery.id.toString()}?canisterId=${canisterId}`}
-                    className="grow basis-[23%]"
+                    className="basis-[23%]"
                   >
                     <Card
                       image={`data:image/png;base64,${Buffer.from(
@@ -104,6 +103,13 @@ const Page = () => {
                 </>
               ))}
           </Flex>
+          {listOfLotteries.length === 0 ? (
+            <h1 className="text-3xl mx-auto text-center mt-12 font-semibold">
+              No lotteries available yet.
+            </h1>
+          ) : (
+            <></>
+          )}
           {maxLottery < listOfLotteries.length ? (
             <Flex align={"center"} padding={"1rem"} width={"full"}>
               <Button

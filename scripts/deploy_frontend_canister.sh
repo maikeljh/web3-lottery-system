@@ -19,6 +19,8 @@ if [[ $ENV == "local" ]]; then
         exit 1
     fi
 
+    bash ./scripts/cleanup.sh "$ENV"
+
     cd azle/ || bash
 
     # pwd

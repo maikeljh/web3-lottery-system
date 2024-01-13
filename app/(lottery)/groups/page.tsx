@@ -4,12 +4,13 @@ import { Button, Flex, Spacer } from "@chakra-ui/react";
 import Banner from "../../../public/assets/L.png";
 import Card from "@/components/common/Card";
 import Link from "next/link";
+import Image from "next/image";
 
 const Page = () => {
   const data = [
     {
       image: Banner,
-      title: "Lottery Title",
+      title: "Group Title",
       description: (
         <>
           <p className="text-primary-3-600">1.2k members</p>
@@ -18,7 +19,7 @@ const Page = () => {
     },
     {
       image: Banner,
-      title: "Lottery Title",
+      title: "Group Title",
       description: (
         <>
           <p className="text-primary-3-600">1.2k members</p>
@@ -27,7 +28,7 @@ const Page = () => {
     },
     {
       image: Banner,
-      title: "Lottery Title",
+      title: "Group Title",
       description: (
         <>
           <p className="text-primary-3-600">1.2k members</p>
@@ -36,7 +37,7 @@ const Page = () => {
     },
     {
       image: Banner,
-      title: "Lottery Title",
+      title: "Group Title",
       description: (
         <>
           <p className="text-primary-3-600">1.2k members</p>
@@ -45,7 +46,7 @@ const Page = () => {
     },
     {
       image: Banner,
-      title: "Lottery Title",
+      title: "Group Title",
       description: (
         <>
           <p className="text-primary-3-600">1.2k members</p>
@@ -54,7 +55,7 @@ const Page = () => {
     },
     {
       image: Banner,
-      title: "Lottery Title",
+      title: "Group Title",
       description: (
         <>
           <p className="text-primary-3-600">1.2k members</p>
@@ -63,7 +64,7 @@ const Page = () => {
     },
     {
       image: Banner,
-      title: "Lottery Title",
+      title: "Group Title",
       description: (
         <>
           <p className="text-primary-3-600">1.2k members</p>
@@ -72,7 +73,7 @@ const Page = () => {
     },
     {
       image: Banner,
-      title: "Lottery Title",
+      title: "Group Title",
       description: (
         <>
           <p className="text-primary-3-600">1.2k members</p>
@@ -104,17 +105,39 @@ const Page = () => {
           </Flex>
           <Flex direction={"row"} gap={"2rem"} wrap={"wrap"}>
             {data &&
-              data.map((lottery) => (
+              data.map((group) => (
                 <>
-                  <Link href="/groups/1" className="grow basis-[23%]">
-                    <Card
-                      image={`data:image/png;base64,${Buffer.from("").toString(
-                        "base64"
-                      )}`}
-                      title={lottery.title}
-                      description={lottery.description}
-                      basis={"23%"}
-                    />
+                  <Link href="/groups/1" className="basis-[23%]">
+                    <Flex
+                      padding={"1rem"}
+                      backgroundColor={"white"}
+                      w={"full"}
+                      align={"center"}
+                      justifyContent={"center"}
+                      textAlign={"center"}
+                      rounded={"lg"}
+                      flexBasis={"23%"}
+                      flexGrow={1}
+                      shadow={"xl"}
+                      cursor={"pointer"}
+                    >
+                      <Flex
+                        direction={"column"}
+                        gap={"10px"}
+                        w={"full"}
+                        mb={"auto"}
+                      >
+                        <Flex align="center">
+                          <Image
+                            src={group.image}
+                            alt="banner"
+                            className="w-full h-auto"
+                          />
+                        </Flex>
+                        <p className="font-bold text-lg">{group.title}</p>
+                        {group.description}
+                      </Flex>
+                    </Flex>
                   </Link>
                 </>
               ))}

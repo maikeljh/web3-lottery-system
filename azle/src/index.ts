@@ -414,9 +414,6 @@ export default Canister({
     Result(LotteryDetailPayload, Error),
     (lotteryId) => {
       try {
-        // Check completed lottery
-        checkCompletedLotteries();
-
         // Validating lottery id
         if (!lotteryId) {
           return Err({ InvalidPayload: `Id is not valid!` });
@@ -457,7 +454,7 @@ export default Canister({
           prizes: lottery.prizes,
           participants: lotteryParticipants,
           participantsAmount: BigInt(lotteryParticipants.length),
-          hostId: lottery.id,
+          hostId: lottery.hostId,
           createdAt: lottery.createdAt,
           endedAt: lottery.endedAt,
           lotteryBanner: lottery.lotteryBanner,
@@ -534,7 +531,7 @@ export default Canister({
           participants: lotteryParticipants,
           participantsAmount: BigInt(lotteryParticipants.length),
           winners: lotteryWinners,
-          hostId: lottery.id,
+          hostId: lottery.hostId,
           createdAt: lottery.createdAt,
           endedAt: lottery.endedAt,
           lotteryBanner: lottery.lotteryBanner,
@@ -615,13 +612,12 @@ export default Canister({
         //   );
         // });
 
-
-        let publicLotteries: LotteryDAO[] = []
+        let publicLotteries: LotteryDAO[] = [];
         lotteries.values().forEach((lottery) => {
-          if (lottery.types === LotteryType.Public && !lottery.isCompleted){
-            publicLotteries = [...publicLotteries, lottery]
+          if (lottery.types === LotteryType.Public && !lottery.isCompleted) {
+            publicLotteries = [...publicLotteries, lottery];
           }
-        })
+        });
         const previewPublicLotteries: LotteryPreviewPayload[] = [];
 
         publicLotteries.forEach((lottery) => {
@@ -666,12 +662,15 @@ export default Canister({
         //   return lottery.hostId === userId && lottery.isCompleted === false;
         // });
 
-        let hostedOngoingLotteries: LotteryDAO[] = []
+        let hostedOngoingLotteries: LotteryDAO[] = [];
         lotteries.values().forEach((lottery) => {
-          if (lottery.hostId.toString() === userId.toString() && !lottery.isCompleted){
-            hostedOngoingLotteries = [...hostedOngoingLotteries, lottery]
+          if (
+            lottery.hostId.toString() === userId.toString() &&
+            !lottery.isCompleted
+          ) {
+            hostedOngoingLotteries = [...hostedOngoingLotteries, lottery];
           }
-        })
+        });
 
         const previewHostedOngoingLotteries: LotteryPreviewPayload[] = [];
 
@@ -719,12 +718,15 @@ export default Canister({
         //     return lottery.hostId === userId && lottery.isCompleted === true;
         //   });
 
-        let hostedCompletedLotteries: LotteryDAO[] = []
+        let hostedCompletedLotteries: LotteryDAO[] = [];
         lotteries.values().forEach((lottery) => {
-          if (lottery.hostId.toString() === userId.toString() && lottery.isCompleted){
+          if (
+            lottery.hostId.toString() === userId.toString() &&
+            lottery.isCompleted
+          ) {
             hostedCompletedLotteries = [...hostedCompletedLotteries, lottery];
           }
-        })
+        });
 
         const previewHostedCompletedLotteries: LotteryPreviewPayload[] = [];
 
@@ -775,14 +777,20 @@ export default Canister({
         //       lottery.isCompleted === false
         //     );
         //   });
-          
+
         let participatedOngoingLotteries: LotteryDAO[] = [];
         lotteries.values().forEach((lottery) => {
-          if (lottery.participants.includes(userId) && lottery.hostId !== userId && !lottery.isCompleted){
-            participatedOngoingLotteries = [...participatedOngoingLotteries, lottery];
+          if (
+            lottery.participants.includes(userId) &&
+            lottery.hostId !== userId &&
+            !lottery.isCompleted
+          ) {
+            participatedOngoingLotteries = [
+              ...participatedOngoingLotteries,
+              lottery,
+            ];
           }
-        })
-
+        });
 
         const previewParticipatedOngoingLotteries: LotteryPreviewPayload[] = [];
 
@@ -834,11 +842,18 @@ export default Canister({
         //     );
         //   });
         let participatedCompletedLotteries: LotteryDAO[] = [];
-        lotteries.values().forEach((lottery) =>{
-          if (lottery.participants.includes(userId) && lottery.hostId.toString() !== userId.toString() && lottery.isCompleted){
-            participatedCompletedLotteries = [...participatedCompletedLotteries, lottery];
+        lotteries.values().forEach((lottery) => {
+          if (
+            lottery.participants.includes(userId) &&
+            lottery.hostId.toString() !== userId.toString() &&
+            lottery.isCompleted
+          ) {
+            participatedCompletedLotteries = [
+              ...participatedCompletedLotteries,
+              lottery,
+            ];
           }
-        })
+        });
 
         const previewParticipatedCompletedLotteries: LotteryPreviewPayload[] =
           [];
@@ -892,13 +907,13 @@ export default Canister({
         //   });
         let userNotifications: NotificationDAO[] = [];
         notifications.values().forEach((notification) => {
-          if (notification.ownerId.toString() === userId.toString() &&
-              notification.isRead === false) {
-                userNotifications = [...userNotifications, notification];
+          if (
+            notification.ownerId.toString() === userId.toString() &&
+            notification.isRead === false
+          ) {
+            userNotifications = [...userNotifications, notification];
           }
-        })
-
-
+        });
 
         const previewUserNotifications: NotificationPayload[] = [];
 
@@ -1344,12 +1359,12 @@ function checkCompletedLotteries(): void {
           //   return lottery.groupId.Some === role.groupId;
           // });
 
-          let lotteryRoles: Roles[] = []
+          let lotteryRoles: Roles[] = [];
           roles.values().forEach((role) => {
-            if (lottery.groupId.Some === role.groupId){
+            if (lottery.groupId.Some === role.groupId) {
               lotteryRoles = [...lotteryRoles, role];
             }
-          })
+          });
           winners = selectWinnersGroup(
             lottery.prizes,
             lottery.participants,

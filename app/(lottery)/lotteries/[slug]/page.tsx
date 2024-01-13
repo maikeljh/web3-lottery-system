@@ -124,7 +124,6 @@ const Page = () => {
             setCompletedLottery(lottery.Ok);
           }
         } catch (error) {
-          console.log(error);
           return;
         }
       }
@@ -137,8 +136,6 @@ const Page = () => {
           const lottery = await azle.detailLottery(
             Principal.fromText(String(slug))
           );
-          console.log(String(slug));
-          console.log(lottery);
           if ("Ok" in lottery) {
             setLottery(lottery.Ok);
             const isParticipant = detailLottery?.participants.some(
@@ -153,7 +150,6 @@ const Page = () => {
             }
           }
         } catch (error) {
-          console.log(error);
           return;
         }
       }
@@ -165,14 +161,8 @@ const Page = () => {
     }
 
     fetchData();
-  }, [
-    detailLottery?.isCompleted,
-    detailLottery?.participants,
-    isAuthenticated,
-    login,
-    principal,
-    slug,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, login, principal, slug]);
 
   const joinLottery = async () => {
     try {
@@ -187,10 +177,48 @@ const Page = () => {
         }
       }
     } catch (error) {
-      console.log(error);
       return;
     }
   };
+
+  const [timeRemaining, setTimeRemaining] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setTimeRemaining({
+        days: Math.ceil(
+          (new Date(Number(detailLottery.endedAt)).getTime() -
+            new Date().getTime()) /
+            (1000 * 60 * 60 * 24)
+        ),
+        hours: Math.ceil(
+          ((new Date(Number(detailLottery.endedAt)).getTime() -
+            new Date().getTime()) %
+            (1000 * 60 * 60 * 24)) /
+            (1000 * 60 * 60)
+        ),
+        minutes: Math.ceil(
+          ((new Date(Number(detailLottery.endedAt)).getTime() -
+            new Date().getTime()) %
+            (1000 * 60 * 60 * 24)) /
+            (1000 * 60 * 60)
+        ),
+        seconds: Math.ceil(
+          ((new Date(Number(detailLottery.endedAt)).getTime() -
+            new Date().getTime()) %
+            (1000 * 60)) /
+            1000
+        ),
+      });
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [detailLottery]);
 
   return (
     <>
@@ -212,7 +240,7 @@ const Page = () => {
                     detailLottery.lotteryBanner
                   ).toString("base64")}`}
                   alt="thumbnail"
-                  className="w-full"
+                  className="w-auto max-w-[20rem] mx-auto"
                 />
               </Flex>
               <Flex align="center" gap={"1rem"}>
@@ -225,11 +253,7 @@ const Page = () => {
                 >
                   <Flex direction={"column"}>
                     <h1 className="text-2xl font-bold text-danger">
-                      {Math.ceil(
-                        (new Date(Number(detailLottery.createdAt)).getTime() -
-                          new Date().getTime()) /
-                          (1000 * 60 * 60 * 24)
-                      )}
+                      {timeRemaining.days}
                     </h1>
                     <h2 className="text-lg font-bold text-danger">Days</h2>
                   </Flex>
@@ -238,12 +262,7 @@ const Page = () => {
                   </Flex>
                   <Flex direction={"column"}>
                     <h1 className="text-2xl font-bold text-danger">
-                      {Math.ceil(
-                        ((new Date(Number(detailLottery.createdAt)).getTime() -
-                          new Date().getTime()) %
-                          (1000 * 60 * 60 * 24)) /
-                          (1000 * 60 * 60)
-                      )}
+                      {timeRemaining.hours}
                     </h1>
                     <h2 className="text-lg font-bold text-danger">Hours</h2>
                   </Flex>
@@ -252,12 +271,7 @@ const Page = () => {
                   </Flex>
                   <Flex direction={"column"}>
                     <h1 className="text-2xl font-bold text-danger">
-                      {Math.ceil(
-                        ((new Date(Number(detailLottery.createdAt)).getTime() -
-                          new Date().getTime()) %
-                          (1000 * 60 * 60)) /
-                          (1000 * 60)
-                      )}
+                      {timeRemaining.minutes}
                     </h1>
                     <h2 className="text-lg font-bold text-danger">Mins</h2>
                   </Flex>
@@ -266,12 +280,7 @@ const Page = () => {
                   </Flex>
                   <Flex direction={"column"}>
                     <h1 className="text-2xl font-bold text-danger">
-                      {Math.ceil(
-                        ((new Date(Number(detailLottery.createdAt)).getTime() -
-                          new Date().getTime()) %
-                          (1000 * 60)) /
-                          1000
-                      )}
+                      {timeRemaining.seconds}
                     </h1>
                     <h2 className="text-lg font-bold text-danger">Secs</h2>
                   </Flex>
@@ -301,7 +310,7 @@ const Page = () => {
                     </p>
                     <p>
                       End at :{" "}
-                      {new Date(Number(detailLottery.createdAt)).toString()}
+                      {new Date(Number(detailLottery.endedAt)).toString()}
                     </p>
                   </Flex>
                   <Flex align="center">
@@ -374,11 +383,19 @@ const Page = () => {
                     </Flex>
                   </>
                 ))}
+              {detailLottery.participants.length === 0 ? (
+                <h1 className="text-2xl mt-4 mx-auto text-center font-semibold">
+                  No participants available yet.
+                </h1>
+              ) : (
+                <></>
+              )}
             </Flex>
           </Flex>
           <Flex direction={"row"}></Flex>
-          {condition === LotteryType.Public ||
-          condition === LotteryType.Private ? (
+          {detailLottery.hostId !== principal &&
+          (condition === LotteryType.Public ||
+            condition === LotteryType.Private) ? (
             <Button
               width={"8rem"}
               fontSize={"small"}
@@ -414,7 +431,7 @@ const Page = () => {
                       completedLottery.lotteryBanner
                     ).toString("base64")}`}
                     alt="thumbnail"
-                    className="w-full"
+                    className="w-full max-w-[20rem] mx-auto"
                   />
                 </Flex>
                 <Flex align="center" direction={"row"} gap={"1rem"} mx={"auto"}>
@@ -448,7 +465,7 @@ const Page = () => {
                     <h1 className="text-2xl font-bold">Host</h1>
                     <Flex direction={"column"} fontWeight={"semibold"}>
                       <p>Host</p>
-                      <p>@user-${completedLottery.hostId.toString() || ""}</p>
+                      <p>@user-${completedLottery?.hostId?.toString() || ""}</p>
                     </Flex>
                   </Flex>
                   <Flex align={"center"} gap={"2rem"} fontWeight={"semibold"}>
@@ -464,9 +481,7 @@ const Page = () => {
                       </p>
                       <p>
                         End at :{" "}
-                        {new Date(
-                          Number(completedLottery.createdAt)
-                        ).toString()}
+                        {new Date(Number(completedLottery.endedAt)).toString()}
                       </p>
                     </Flex>
                   </Flex>
@@ -565,6 +580,13 @@ const Page = () => {
                         </Flex>
                       </>
                     ))}
+                {completedLottery.participants.length === 0 ? (
+                  <h1 className="text-2xl mt-4 mx-auto text-center font-semibold">
+                    No participants available yet.
+                  </h1>
+                ) : (
+                  <></>
+                )}
               </Flex>
             </Flex>
           </Flex>

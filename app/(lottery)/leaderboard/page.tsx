@@ -28,12 +28,10 @@ const Page = () => {
       try {
         const azle: AZLE = await makeAzleActor();
         const users = await azle.getLeaderboard();
-        console.log(users);
         if ("Ok" in users) {
           setWinners(users.Ok);
         }
       } catch (error) {
-        console.log(error);
         return;
       }
     };

@@ -45,7 +45,6 @@ const Page = () => {
           router.push(`/profile/create?canisterId=${canisterId}`);
         }
       } catch (error) {
-        console.log(error);
         return;
       }
     };

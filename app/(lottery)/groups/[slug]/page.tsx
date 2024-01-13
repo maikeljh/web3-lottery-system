@@ -212,7 +212,7 @@ const Page = () => {
               {data2 &&
                 data2.map((lottery) => (
                   <>
-                    <Link href={`/lotteries/1`} className="grow basis-[23%]">
+                    <Link href={`/lotteries/1`} className="basis-[23%]">
                       <Card
                         image={`data:image/png;base64,${Buffer.from(
                           ""
