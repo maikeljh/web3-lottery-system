@@ -196,7 +196,9 @@ const Page = () => {
 
   return (
     <>
-      {condition === LotteryType.Public || condition === LotteryType.Joined ? (
+      {condition === LotteryType.Public ||
+      condition === LotteryType.Private ||
+      condition === LotteryType.Joined ? (
         <Flex
           rounded={"xl"}
           bg={"white"}
@@ -377,7 +379,8 @@ const Page = () => {
             </Flex>
           </Flex>
           <Flex direction={"row"}></Flex>
-          {condition === LotteryType.Public ? (
+          {condition === LotteryType.Public ||
+          condition === LotteryType.Private ? (
             <Button
               width={"8rem"}
               fontSize={"small"}
