@@ -4,7 +4,7 @@ import Image, { StaticImageData } from "next/image";
 import { ReactElement } from "react";
 
 interface CardProps {
-  image: string;
+  image?: string;
   title: string;
   description: ReactElement;
   basis?: string;
@@ -34,9 +34,13 @@ const Card: React.FC<CardProps> = ({
       cursor={"pointer"}
     >
       <Flex direction={"column"} gap={"10px"} w={"full"} mb={"auto"}>
-        <Flex align="center">
-          <img src={image} alt="banner" className="w-full h-auto" />
-        </Flex>
+        {image ? (
+          <Flex align="center">
+            <img src={image} alt="banner" className="w-full h-auto" />
+          </Flex>
+        ) : (
+          <></>
+        )}
         <p className="font-bold text-lg">{title}</p>
         {description}
       </Flex>

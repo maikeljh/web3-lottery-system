@@ -12,6 +12,7 @@ import { _SERVICE as AZLE } from "@/config/declarations/dfx_generated/azle.did";
 import { Principal } from "@dfinity/principal";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/app/use-auth-client";
+import Banner from "../../../../public/assets/banner.png";
 
 enum LotteryType {
   Private = "PRIVATE",
@@ -77,7 +78,7 @@ const Page = () => {
 
   const [imageSrc, setImageSrc] = useState<string | StaticImageData>(Add);
   const [file, setFile] = useState<File>();
-  const defaultGroupId: [Principal] = [Principal.fromText("")];
+  const defaultGroupId: [] = [];
   const { principal, isAuthenticated, login } = useAuth();
 
   useEffect(() => {
@@ -148,7 +149,6 @@ const Page = () => {
               data.map((card) => (
                 <>
                   <Card
-                    image={"../../public/assets/banner.png"}
                     title={card.title}
                     description={card.description}
                     basis={"23%"}

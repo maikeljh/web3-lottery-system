@@ -79,7 +79,7 @@ enum LotteryType {
 
 const Page = () => {
   const [condition, setCondition] = useState(LotteryType["Public"]);
-  const defaultGroupId: [Principal] = [Principal.fromText("")];
+  const defaultGroupId: [] = [];
   const canisterId =
     useSearchParams().get("canisterId") || localStorage.getItem("canisterId");
   const [detailLottery, setLottery] = useState<OngoingLottery>({
